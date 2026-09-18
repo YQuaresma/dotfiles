@@ -1,0 +1,5 @@
+interface:
+  display_name: "To Plan"
+  short_description: "Turn a PRD into a phased execution plan directory"
+policy:
+  allow_implicit_invocation: false

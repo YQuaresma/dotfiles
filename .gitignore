@@ -1,0 +1,119 @@
+# -----------------------------
+# Repo Ignore
+# -----------------------------
+*[Ww][Oo][Rr][Kk]*
+.gitconfig_*
+.zshrc_devenv*
+.zshrc.private
+.bashrc.private
+
+# -----------------------------
+# Generated snapshots (install/*.out)
+# -----------------------------
+*.out
+
+# -----------------------------
+# Secrets
+# -----------------------------
+# symlinks/home/ mirrors $HOME 1:1, so anything that normally lives in a home
+# directory can plausibly be dropped in here later. These patterns exist so an
+# accidental `git add` of a credential file is a no-op rather than a disclosure.
+*.key
+*.pem
+*.p12
+*.pfx
+*.jks
+*.keystore
+*.kdbx
+id_*
+known_hosts
+**/.ssh/id_*
+.netrc
+.npmrc
+.pypirc
+credentials
+credentials.json
+secrets.json
+service-account*.json
+*secret*
+*credential*
+*token*
+.aws/
+**/.kube/config
+**/.docker/config.json
+**/.config/gh/
+
+# -----------------------------
+# macOS system files
+# -----------------------------
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# -----------------------------
+# Temporary / editor files
+# -----------------------------
+*.swp
+*.swo
+*.bak
+*.orig
+*.rej
+
+# -----------------------------
+# JetBrains / ReSharper
+# -----------------------------
+**/.idea/*
+# Keep shared project configs — root .idea/ only; any other .idea/ in the tree
+# (e.g. install/.idea/ from opening a subfolder directly in an IDE) stays fully ignored
+!.idea/codeStyles/
+!.idea/inspectionProfiles/
+!.idea/runConfigurations/
+*.iml
+*.DotSettings
+*.DotSettings.user
+symlinks/Developer/Support/ReSharper/
+
+# -----------------------------
+# Node / build artifacts
+# -----------------------------
+node_modules/
+dist/
+build/
+out/
+npm-debug.log*
+yarn-error.log*
+yarn-debug.log*
+.pnp.*
+.pnpm-debug.log*
+
+# -----------------------------
+# Environment files
+# -----------------------------
+.env
+.env.*
+!.env.example
+
+# -----------------------------
+# Python / virtual environments (optional)
+# -----------------------------
+venv/
+__pycache__/
+*.pyc
+
+# -----------------------------
+# Claude Code (exclude local settings; track shared commands)
+# -----------------------------
+.claude/settings.local.json
+.claude/settings.json
+
+# -----------------------------
+# Nix (unpinned — always resolve latest flake inputs; nix-update.sh
+# regenerates this locally, no need to commit it)
+# -----------------------------
+nix/flake.lock
+
+# -----------------------------
+# Miscellaneous
+# -----------------------------
+*.sw?
+Thumbs.db

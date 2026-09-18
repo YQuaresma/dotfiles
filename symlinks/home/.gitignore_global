@@ -1,0 +1,11 @@
+*~
+.DS_Store
+.env
+.envrc
+
+# Handoff notes (any casing) — local session context, never tracked
+Handoff*
+!symlinks/home/.agents/skills/handoff-session/
+!symlinks/home/.agents/skills/handoff-session/**
+
+**/.claude/settings.local.json

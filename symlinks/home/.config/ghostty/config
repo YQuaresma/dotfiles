@@ -1,0 +1,41 @@
+# Personal Ghostty config
+# Location: ~/.config/ghostty/config
+#
+# This file loads BEFORE ~/Library/Application Support/com.mitchellh.ghostty/config
+# on macOS, so keep that file as template/comments only to avoid conflicts.
+
+# Converted from Homebrew.terminal
+background = #232321
+foreground = #FFF3DB
+cursor-color = #00FF00
+
+selection-background = #FFFFFF
+selection-foreground = #000000
+
+palette = 0=#1A1A1A
+palette = 1=#FF4C4C
+palette = 2=#00FF00
+palette = 3=#FFB454
+palette = 4=#6C8EFF
+palette = 5=#D783FF
+palette = 6=#5CE1FF
+palette = 7=#E6E6E6
+
+palette = 8=#4D4D4D
+palette = 9=#FF6E6E
+palette = 10=#00FF00
+palette = 11=#FFD479
+palette = 12=#8FA9FF
+palette = 13=#E6A8FF
+palette = 14=#7FEFFF
+palette = 15=#FFFFFF
+
+font-family = "Inconsolata Nerd Font"
+font-size = 16
+font-style-bold = Bold
+
+cursor-style = block
+cursor-style-blink = true
+bold-is-bright = true
+
+shell-integration-features = no-cursor
