@@ -377,14 +377,31 @@ software-properties-common && sudo apt autoremove -y` if ever needed), `install-
 
 | Script | Description |
 |--------|-------------|
-| `sys-update.sh` | System update — apt/snap/firmware (Ubuntu) or Homebrew (macOS), plus Nix + asdf on both. Runs every applicable step non-interactively, no prompts. |
-| `nix/nix-install.sh` | Installs Nix (Determinate Systems installer) — lives in `nix/`, not `~/bin`, not on `$PATH` |
+| `sys-update.sh` | System update — apt/snap/firmware (Ubuntu) or Homebrew (macOS), plus Nix + asdf on both. Package steps run non-interactively; the two steps that would execute newly-fetched code are gated (see below). |
+| `nix/nix-install.sh` | Installs Nix (Determinate Systems installer) — lives in `nix/`, not `~/bin`, not on `$PATH`. Warns that the installer escalates to root |
 | `nix/nix-switch.sh` | Applies the Nix flake config (`darwin-rebuild switch` / `home-manager switch`) |
-| `nix/nix-update.sh` | Updates flake inputs, re-applies, garbage-collects old generations |
+| `nix/nix-update.sh` | Updates flake inputs, shows which inputs moved, asks before re-applying, garbage-collects old generations |
 | `nix/nix-doctor.sh` | Read-only health check for the Nix + asdf layer specifically |
 | `sys-remove-dsstore.sh [path]` | Recursively remove `.DS_Store` files |
 | `pi-check.sh [ip...]` | Verify Pi-hole blocking (read-only) |
 | `pi-update.sh <ip>` | Update OS + Pi-hole on a Pi, reboot, wait for recovery |
+
+### Update gates
+
+`sys-update.sh` updates `~/.dotfiles` and then runs the scripts it just pulled —
+`nix-update.sh` activates the new tree with `sudo` on macOS. An unattended merge
+is therefore equivalent to remote root execution, so two points now ask first:
+
+| Gate | Shows | Skips when | Override |
+|---|---|---|---|
+| dotfiles self-update | incoming commits + how many lack a good GPG signature | no tty, or you decline | `DOTFILES_UPDATE_ASSUME_YES=1` |
+| Nix flake apply | which flake inputs moved (per-input revision diff) | no tty, or you decline | `NIX_UPDATE_ASSUME_YES=1` |
+
+Both **fail closed**: with no terminal to answer on, nothing is applied. Set the
+override only where accepting unreviewed upstream code is acceptable.
+
+Unsigned incoming commits are reported, not rejected — GitHub web merges are
+signed by GitHub's own key, which is usually absent from a local keyring.
 
 ## Pi-hole Scripts
 

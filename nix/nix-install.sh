@@ -14,6 +14,16 @@ if command -v nix &>/dev/null; then
     exit 0
 fi
 
-curl --proto '=https' --tlsv1.2 -sSf -L https://install.determinate.systems/nix | sh -s -- install
+# This installer escalates to root: it creates /nix, installs the build daemon
+# (launchd on macOS, systemd on Ubuntu) and edits /etc/nix/nix.conf. Determinate
+# publishes no checksum for the bootstrap script, so pin the scheme on the
+# request and on redirects, and download before executing so a truncated
+# transfer cannot be partially run.
+warn "The Nix installer runs with root privileges (daemon, /nix, /etc/nix)."
+nix_installer="$(mktemp)"
+trap 'rm -f "$nix_installer"' EXIT
+curl --proto '=https' --proto-redir '=https' --tlsv1.2 -fsSL \
+    https://install.determinate.systems/nix -o "$nix_installer"
+sh "$nix_installer" install
 
 success "Nix installed — restart your shell, then run nix-switch.sh"

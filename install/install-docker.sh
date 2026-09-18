@@ -108,8 +108,28 @@ install_desktop_debian() {
     tmpdir="$(mktemp -d)"
     trap 'rm -rf "$tmpdir"' RETURN
     deb="${tmpdir}/docker-desktop-${arch}.deb"
-    curl -fsSL -o "$deb" \
+    curl --proto '=https' --proto-redir '=https' --tlsv1.2 -fsSL -o "$deb" \
         "https://desktop.docker.com/linux/main/${arch}/docker-desktop-${arch}.deb"
+
+    # Docker publishes no stable checksum URL for the "main" channel, so this
+    # cannot be verified automatically. apt does not check signatures on a local
+    # .deb and its maintainer scripts run as root, which leaves TLS as the only
+    # control. Set DOCKER_DESKTOP_SHA256 (from the release notes) to close that.
+    if [[ -n "${DOCKER_DESKTOP_SHA256:-}" ]]; then
+        local actual
+        actual="$(sha256sum "$deb" | awk '{print $1}')"
+        if [[ "$actual" != "$DOCKER_DESKTOP_SHA256" ]]; then
+            error "Docker Desktop checksum mismatch — refusing to install."
+            error "Expected ${DOCKER_DESKTOP_SHA256}"
+            error "Actual   ${actual}"
+            return 1
+        fi
+        success "Docker Desktop checksum verified."
+    else
+        warn "DOCKER_DESKTOP_SHA256 not set — installing an unverified .deb as root."
+        warn "Pin it from https://docs.docker.com/desktop/release-notes/ to verify."
+    fi
+
     sudo apt-get install -y "$deb"
     systemctl --user enable docker-desktop 2>/dev/null || true
     success "Docker Desktop installed."
