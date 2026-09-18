@@ -4,6 +4,10 @@ set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 source "${SCRIPT_DIR}/../symlinks/home/bin/functions.sh"
+# Same list the installer uses, so this removes exactly what was installed —
+# no more (it used to uninstall apps the installer never touched) and no less.
+# shellcheck source=install/apps-gui.list.sh
+source "${SCRIPT_DIR}/apps-gui.list.sh"
 OS="$(detect_os)"
 
 echo "--------------------------------"
@@ -11,29 +15,7 @@ cog_msg "Removing GUI apps..."
 echo "--------------------------------"
 
 if [[ "$OS" == "macos" ]]; then
-    casks=(
-      "claude"
-      "clocker"
-      "drawio"
-      "firefox"
-      "font-fira-code-nerd-font"
-      "font-inconsolata-nerd-font"
-      "font-meslo-lg-nerd-font"
-      "gitkraken"
-      "google-chrome"
-      "jetbrains-toolbox"
-      "meld"
-      "ngrok"
-      "notion"
-      "postman"
-      "rectangle"
-      "sourcetree"
-      "sublime-text"
-      "visual-studio-code"
-      "whatsapp"
-    )
-
-    for pkg in "${casks[@]}"; do
+    for pkg in "${GUI_CASKS[@]}"; do
         if brew list --cask "$pkg" &>/dev/null; then
             brew uninstall --cask "$pkg" && success "Removed: $pkg" || error "Failed to remove: $pkg — continuing..."
         else
@@ -42,12 +24,8 @@ if [[ "$OS" == "macos" ]]; then
     done
 
 elif [[ "$OS" == "debian" ]]; then
-    snap_apps=(
-      "1password" "code" "drawio" "firefox" "gitkraken"
-      "ngrok" "notion-desktop" "postman" "sublime-text"
-    )
-
-    for pkg in "${snap_apps[@]}"; do
+    for entry in "${GUI_SNAPS[@]}"; do
+        pkg="$(snap_pkg_name "$entry")"
         if snap list "$pkg" &>/dev/null 2>&1; then
             sudo snap remove "$pkg" && success "Removed: $pkg" || error "Failed to remove: $pkg — continuing..."
         else

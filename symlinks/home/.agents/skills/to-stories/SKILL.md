@@ -74,7 +74,7 @@ Rules:
 - **Acceptance criteria**: checkable and exhaustive for this story's layer. Each criterion must be falsifiable.
 - **Out of scope**: names adjacent work a reader might expect here but that belongs elsewhere, with its owning story ID. Omit only when nothing adjacent could be confused.
 - **No testing section.** Never add one.
-- The `Other` section (`[FLM-05]`, `[FLM-12]`-style schema publish stories) has no `Out of scope` when there is nothing adjacent to clarify.
+- The `Other` section (`[DEMO-05]`, `[DEMO-12]`-style schema publish stories) has no `Out of scope` when there is nothing adjacent to clarify.
 
 ## Process
 

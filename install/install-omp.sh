@@ -26,7 +26,16 @@ if [[ "$OS" == "macos" ]]; then
     brew install can1357/tap/omp
 
 elif [[ "$OS" == "debian" ]]; then
-    curl -fsSL https://omp.sh/install | sh
+    # Third-party, unpinned installer. It is not checksum- or signature-verified
+    # upstream, so the only controls available are transport ones: pin the scheme
+    # for the initial request AND every redirect, and download to a file first so
+    # a truncated transfer cannot be half-executed by `sh`.
+    warn "omp.sh/install is third-party code fetched at HEAD — review it if that matters to you."
+    omp_installer="$(mktemp)"
+    trap 'rm -f "$omp_installer"' EXIT
+    curl --proto '=https' --proto-redir '=https' --tlsv1.2 -fsSL \
+        https://omp.sh/install -o "$omp_installer"
+    sh "$omp_installer"
 
 else
     error "Unsupported OS: ${OS}"; exit 1
