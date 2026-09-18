@@ -38,7 +38,11 @@ export GPG_TTY="$(tty)"
 
 export GH_NO_UPDATE_NOTIFIER=1
 export GH_CONFIG_DIR="$HOME/.config/gh"
-export TF_CLI_ARGS_apply="-auto-approve"
+# Deliberately NOT setting TF_CLI_ARGS_apply="-auto-approve" here. A global
+# export removes the last confirmation before `terraform apply` mutates or
+# destroys real infrastructure, in every workspace including production, and it
+# is inherited by every subshell, script, CI runner and coding agent. Opt in per
+# project instead (direnv, or `TF_CLI_ARGS_apply=-auto-approve terraform apply`).
 
 if [[ "$OS" == "macos" ]]; then
     export ICLOUD_DRIVE="$HOME/Library/Mobile Documents/com~apple~CloudDocs"
@@ -191,8 +195,15 @@ typeset -U PATH
 # -------------------------------------------------------------------
 # SECTION: Initialize completions
 # -------------------------------------------------------------------
+# `compinit -C` skips compaudit, the check for world-writable or wrongly-owned
+# directories in $fpath — and $fpath includes ~/.docker/completions above plus
+# whatever Homebrew/Nix add. Completion files are sourced as zsh code at every
+# shell start, so an insecure directory would load silently. Use a cached dump
+# instead: still fast, still audited.
 autoload -Uz compinit
-compinit -C
+ZCOMPDUMP="${XDG_CACHE_HOME:-$HOME/.cache}/zcompdump"
+[ -d "${ZCOMPDUMP:h}" ] || mkdir -p "${ZCOMPDUMP:h}"
+compinit -d "$ZCOMPDUMP"
 zstyle ':completion:*' menu select
 
 # -------------------------------------------------------------------

@@ -12,16 +12,16 @@ Implement a JIRA ticket end to end: read inputs, plan, implement in gated phases
 Invocation examples:
 
 ```text
-/skill:implement-jira-ticket TAK-641
-/skill:implement-jira-ticket TAK-641 ~/Developer/AI/TAK-641.md
-/skill:implement-jira-ticket TAK-641 project-plan: ~/Developer/AI/project.md implementation-plan: ~/Developer/AI/TAK-641.md
+/skill:implement-jira-ticket DEMO-123
+/skill:implement-jira-ticket DEMO-123 ~/Developer/AI/DEMO-123.md
+/skill:implement-jira-ticket DEMO-123 project-plan: ~/Developer/AI/project.md implementation-plan: ~/Developer/AI/DEMO-123.md
 ```
 
 ## Inputs
 
 | Input | Rule |
 |---|---|
-| **JIRA ticket** | Required. Ticket key (e.g. `TAK-641`) or full Jira URL. |
+| **JIRA ticket** | Required. Ticket key (e.g. `DEMO-123`) or full Jira URL. |
 | **Project plan** | Optional. Absolute path to a feature-level plan covering related stories. Read-only background context; never modify it. |
 | **Implementation plan** | Optional. Absolute path to the plan for this ticket. If absent, generate it at `~/Developer/AI/<TICKET-ID>.md` before writing any code. |
 

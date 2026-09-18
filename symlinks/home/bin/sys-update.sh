@@ -87,15 +87,59 @@ update_dotfiles_repo() {
         return 0
     fi
 
-    arrow "Updating dotfiles repo (main)..."
+    arrow "Checking for dotfiles updates (main)..."
     if ! git -C "$repo" fetch --quiet origin main; then
         warn "Failed to fetch ~/.dotfiles — skipping dotfiles update."
         return 0
     fi
+
+    local incoming
+    incoming="$(git -C "$repo" log --oneline HEAD..origin/main 2>/dev/null || true)"
+    if [[ -z "$incoming" ]]; then
+        tick "~/.dotfiles already up to date."
+        echo
+        return 0
+    fi
+
+    # This repo updates itself and then runs the scripts it just pulled —
+    # nix-update.sh below activates the new tree with sudo. That makes an
+    # unattended merge equivalent to remote root execution, so show what is
+    # coming, check that it is signed, and require an explicit yes.
+    highlight "Incoming commits:"
+    echo "$incoming" | sed 's/^/    /'
+
+    local unsigned=0 c
+    while IFS= read -r c; do
+        [[ -z "$c" ]] && continue
+        git -C "$repo" verify-commit "$c" >/dev/null 2>&1 || unsigned=$((unsigned + 1))
+    done < <(git -C "$repo" rev-list HEAD..origin/main)
+
+    if (( unsigned > 0 )); then
+        warn "${unsigned} incoming commit(s) have no verifiable signature."
+        warn "Expected for GitHub web merges (signed by GitHub's key); suspicious otherwise."
+    else
+        tick "All incoming commits carry a good signature."
+    fi
+
+    # Fail closed: no tty means nobody can answer, so do not apply.
+    if [[ "${DOTFILES_UPDATE_ASSUME_YES:-0}" == "1" ]]; then
+        info "DOTFILES_UPDATE_ASSUME_YES=1 — applying without prompting."
+    elif [[ ! -t 0 ]]; then
+        warn "Not an interactive shell — skipping dotfiles update."
+        warn "Re-run interactively, or set DOTFILES_UPDATE_ASSUME_YES=1 to accept unreviewed updates."
+        echo
+        return 0
+    elif ! confirm "Apply these updates to ~/.dotfiles?"; then
+        warn "Declined — skipping dotfiles update."
+        echo
+        return 0
+    fi
+
     if ! git -C "$repo" merge --ff-only --quiet origin/main; then
         warn "~/.dotfiles main can't fast-forward to origin/main — skipping dotfiles update."
         return 0
     fi
+    success "~/.dotfiles updated."
     echo
 }
 

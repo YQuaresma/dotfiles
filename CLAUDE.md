@@ -204,6 +204,40 @@ blocks fallback to the global one.
 
 New scripts under `symlinks/home/bin/` source `functions.sh` (co-located) as `${SCRIPT_DIR}/functions.sh`; scripts living elsewhere (`install/`, `nix/`) source it as `${SCRIPT_DIR}/../symlinks/home/bin/functions.sh` for consistent output and error handling.
 
+**`install/apps-gui.list.sh`** — the single source of truth for `GUI_CASKS`
+(macOS) and `GUI_SNAPS` (Ubuntu), sourced by both `install-apps-gui.sh` and
+`remove-apps-gui.sh`, plus `snap_pkg_name`/`snap_pkg_flags` helpers. **Never
+reintroduce a literal package list into either script.** They previously kept
+separate lists that drifted, so `remove-apps-gui.sh` uninstalled apps the
+installer never installed (`clocker`, three Nerd Fonts now Nix-managed) while
+leaving behind ones it did (`1password`, `balenaetcher`, `meetingbar`,
+`jetbrains-toolbox`). An "undo" that removes things the user installed by hand
+is worse than one that does nothing.
+
+## Update Gates (`sys-update.sh`, `nix/nix-update.sh`)
+
+`sys-update.sh` fast-forwards `~/.dotfiles` and then executes the scripts it
+just pulled — `nix-update.sh` activates that tree with `sudo` on macOS. An
+unattended merge is therefore remote root execution, so both points prompt:
+
+- `update_dotfiles_repo()` prints incoming commits, counts those without a good
+  GPG signature, and requires a `confirm` before merging.
+- `nix-update.sh` snapshots `flake.lock`, shows a per-input revision diff after
+  `nix flake update`, and requires a `confirm` before calling `nix-switch.sh`.
+
+Both **fail closed** when there is no tty (`[[ ! -t 0 ]]`), because `confirm`
+declines on EOF. Overrides: `DOTFILES_UPDATE_ASSUME_YES=1`,
+`NIX_UPDATE_ASSUME_YES=1`. Do not remove these gates or make them default-yes.
+
+Unsigned commits are **reported, not rejected** — GitHub web merges are signed
+by GitHub's key, which is usually absent from a local keyring, so hard failure
+would break every legitimate update.
+
+Also deliberate: `.zshrc`/`.bashrc` do **not** export
+`TF_CLI_ARGS_apply="-auto-approve"`. It removed the last confirmation before
+`terraform apply` mutated or destroyed real infrastructure in every workspace,
+and was inherited by every subshell, script and coding agent. Opt in per project.
+
 ## Uninstall Scripts (`install/`)
 
 Each `install-*.sh` has a matching `remove-*.sh` that reverses its changes. CLI utils,

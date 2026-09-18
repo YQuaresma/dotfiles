@@ -3,6 +3,8 @@ set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 source "${SCRIPT_DIR}/../symlinks/home/bin/functions.sh"
+# shellcheck source=install/apps-gui.list.sh
+source "${SCRIPT_DIR}/apps-gui.list.sh"
 OS="$(detect_os)"
 
 if [[ "$OS" == "macos" ]]; then
@@ -10,28 +12,7 @@ if [[ "$OS" == "macos" ]]; then
     cog_msg "Installing Brew cask apps..."
     echo "--------------------------------"
 
-    casks=(
-      "1password"
-      "balenaetcher"
-      "claude"
-      "drawio"
-      "firefox"
-      "gitkraken"
-      "google-chrome"
-      "jetbrains-toolbox"
-      "meetingbar"
-      "meld"
-      "ngrok"
-      "notion"
-      "postman"
-      "rectangle"
-      "sourcetree"
-      "sublime-text"
-      "visual-studio-code"
-      "whatsapp"
-    )
-
-    for pkg in "${casks[@]}"; do
+    for pkg in "${GUI_CASKS[@]}"; do
         if brew list --cask "$pkg" &>/dev/null; then
             warn "Already installed: $pkg"
         else
@@ -44,23 +25,9 @@ elif [[ "$OS" == "debian" ]]; then
     cog_msg "Installing Snap applications..."
     echo "--------------------------------"
 
-    snap_apps=(
-      "1password"
-      "code --classic"
-      "drawio"
-      "firefox"
-      "gitkraken --classic"
-      "jetbrains-toolbox --beta"
-      "ngrok"
-      "notion-desktop"
-      "postman"
-      "sublime-text --classic"
-    )
-
-    for entry in "${snap_apps[@]}"; do
-        pkg="${entry%% *}"
-        flags="${entry#* }"
-        [ "$flags" = "$pkg" ] && flags=""
+    for entry in "${GUI_SNAPS[@]}"; do
+        pkg="$(snap_pkg_name "$entry")"
+        flags="$(snap_pkg_flags "$entry")"
         if snap list "$pkg" &>/dev/null; then
             warn "Already installed: $pkg"
         else
