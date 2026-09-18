@@ -1,0 +1,63 @@
+# Local development stack. Credentials are NOT stored in this file — they are
+# read from ~/Developer/Docker/.env, which is a real, local-only, untracked file
+# (the Docker directory itself is not repo-managed; only this compose file is
+# symlinked in). Create it once:
+#
+#   printf 'MSSQL_SA_PASSWORD=%s\nSEQ_PASSWORD=%s\n' \
+#     "$(openssl rand -base64 24)" "$(openssl rand -base64 24)" \
+#     > ~/Developer/Docker/.env && chmod 600 ~/Developer/Docker/.env
+#
+# Every port is bound to 127.0.0.1 on purpose: the short "1433:1433" form binds
+# 0.0.0.0, which publishes these services — and their credentials — to the whole
+# local network. Image tags are pinned; bump them deliberately, not implicitly.
+
+services:
+  sqlserver:
+    restart: "no"
+    container_name: sqlserver
+    image: mcr.microsoft.com/mssql/server:2022-CU27-ubuntu-22.04
+    environment:
+      - ACCEPT_EULA=Y
+      - MSSQL_SA_PASSWORD=${MSSQL_SA_PASSWORD:?set MSSQL_SA_PASSWORD in ~/Developer/Docker/.env}
+      - MSSQL_BACKUP_DIR=/var/opt/mssql/backup
+    ports:
+      - "127.0.0.1:1433:1433"
+    volumes:
+      - ./Volumes/MSSQL/data:/var/opt/mssql/data
+      - ./Volumes/MSSQL/backup:/var/opt/mssql/backup
+      - ./Volumes/MSSQL/log:/var/opt/mssql/log
+      - ./Volumes/MSSQL/secrets:/var/opt/mssql/secrets
+
+  seq:
+    restart: "no"
+    container_name: seq
+    image: datalust/seq:2026.1
+    environment:
+      - ACCEPT_EULA=Y
+      - SEQ_API_CANONICAL_BASE_URL=http://localhost:5341
+      - SEQ_PASSWORD=${SEQ_PASSWORD:?set SEQ_PASSWORD in ~/Developer/Docker/.env}
+    ports:
+      - "127.0.0.1:5341:80"
+      - "127.0.0.1:4317:4317"
+      - "127.0.0.1:4318:4318"
+    volumes:
+      - ./Volumes/SEQ/data:/data
+
+  cosmosdb:
+    restart: "no"
+    container_name: cosmosdb
+    image: mcr.microsoft.com/cosmosdb/linux/azure-cosmos-emulator:vnext-preview
+    ports:
+      - "127.0.0.1:8081:8081"
+      - "127.0.0.1:10250-10255:10250-10255"
+
+  azurite:
+    restart: "no"
+    container_name: azurite
+    image: mcr.microsoft.com/azure-storage/azurite:3.37.0
+    ports:
+      - "127.0.0.1:10000:10000"
+      - "127.0.0.1:10001:10001"
+      - "127.0.0.1:10002:10002"
+    volumes:
+      - ./Volumes/Azurite:/data

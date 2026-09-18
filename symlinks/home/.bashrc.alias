@@ -1,0 +1,36 @@
+# ~/.bashrc.alias — translated from ~/.zshrc.alias. Sourced by ~/.bashrc.
+
+# -----------------------------
+# SECTION: Functions
+# -----------------------------
+
+pathl() { echo "$PATH" | tr ':' '\n'; }
+finder-show-all-files() { defaults write com.apple.finder AppleShowAllFiles -bool "${1:?Usage: finder-show-all-files true|false}" && killall Finder; }
+rm-dsstore() { bash "$HOME/bin/sys-remove-dsstore.sh" "$@"; }
+
+# -----------------------------
+# SECTION: Aliases
+# -----------------------------
+
+alias cd-='cd -'
+alias cdb='cd-'
+alias cl='clear'
+alias cls='clear'
+alias jq='gojq'
+alias tt='terraform'
+alias szrc='source ~/.bashrc'
+
+# eza aliases
+alias ls='eza -a --no-quotes --color=always'
+alias ll='eza -lhB --no-quotes --group-directories-first --icons=auto'
+alias la='eza -lhBa --no-quotes --group-directories-first --icons=auto'
+alias lt='eza -lhBaT --no-quotes --group-directories-first --icons=auto --level=2'  # Tree view, level 2
+alias ltt='eza -lhBaT --no-quotes --group-directories-first --icons=auto --level=3' # Tree view, level 3
+alias lt2='eza -lhBaT --no-quotes --group-directories-first --icons=auto --level=3' # Tree view, level 3
+alias lt3='eza -lhBaT --no-quotes --group-directories-first --icons=auto --level=4' # Tree view, level 4
+alias lt4='eza -lhBaT --no-quotes --group-directories-first --icons=auto --level=5' # Tree view, level 5
+
+# bat aliases — both OSes get `bat` from Nix (home/packages.nix), binary name `bat`
+# everywhere now (previously Ubuntu's apt package shipped it as `batcat`).
+alias bat='bat --color=always --paging=never'
+alias cat='bat --style=plain'

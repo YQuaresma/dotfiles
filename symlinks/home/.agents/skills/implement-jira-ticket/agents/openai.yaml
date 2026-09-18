@@ -1,0 +1,4 @@
+interface:
+  display_name: "Implement JIRA Ticket"
+  short_description: "Implement a JIRA ticket end to end with plan, isolated team, approval gates, and draft PR"
+  default_prompt: "Use $implement-jira-ticket to implement a JIRA ticket end to end."

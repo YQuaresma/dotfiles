@@ -1,0 +1,195 @@
+#!/usr/bin/env bash
+# Global pre-commit hook — branch protection + secret/credential scanning of
+# staged content, applied to every repo on this machine.
+#
+# Installed via `core.hooksPath = ~/.githooks` in ~/.gitconfig (symlinks/home/.gitconfig).
+# A repo that sets its own local `core.hooksPath` uses that instead of this file —
+# local always wins over global, with no fallback to the global hook for a missing
+# hook file at the local path.
+#
+# Deliberately generic: no project-specific skip lists or lint rules (like this
+# dotfiles repo's former OS-detection audit) — those only make sense scoped to one
+# repo's own conventions, which can't be expressed usefully here. Bypass a false
+# positive on a single commit with `git commit --no-verify`.
+#
+# This hook is advisory and locally bypassable. It is a convenience, not a
+# control: enable GitHub secret scanning + push protection on any public repo.
+set -euo pipefail
+
+# ----------------------------------------------------------
+# 1. Branch protection
+# ----------------------------------------------------------
+protected_branches="^(main|master|develop)$"
+current_branch="$(git branch --show-current)"
+
+if [[ "$current_branch" =~ $protected_branches ]]; then
+    echo "❌ Commit blocked — you are on the '$current_branch' branch."
+    echo "   Create a feature branch first: git checkout -b <branch-name>"
+    exit 1
+fi
+
+# ----------------------------------------------------------
+# 2. Security screening  (staged content only)
+# ----------------------------------------------------------
+echo "🔒 Security screening..."
+
+violations=0
+
+flag() {
+    local file="$1" label="$2" match="$3"
+    echo "  ❌ SECURITY  ${file} — ${label}"
+    echo "${match}" | head -3 | sed 's/^/             /'
+    (( violations++ )) || true
+}
+
+# Scan the *staged blob*, not the working-tree file: `git add secret.env` followed
+# by cleaning the file on disk must not pass. `git show ":$path"` is the index
+# content — the exact bytes about to be committed.
+#
+# POSIX ERE only: no `(?i)` inline flags, no `\s` (use `[[:space:]]`).
+#
+# `(?i)` is the worst kind of broken here — it does not fail loudly. GNU grep
+# 3.12 emits "warning: ? at start of expression" and returns exit 1, i.e. a
+# silent no-match; older GNU greps error out, and the exit status was previously
+# swallowed by `|| true`. Either way the rule is dead while the hook reports
+# success. Case-insensitivity comes from `-i` via scan_i instead.
+#
+# A nonzero-above-1 grep status is fatal, never treated as "no match".
+staged_blob() { git show ":$1" 2>/dev/null || true; }
+
+# Key-header literals, assembled at use so they never appear whole in this file.
+_PEM_HEAD="$(printf -- '-%.0s' {1..5})BEGIN"
+_PUTTY_HEAD="PuTTY-User-Key""-File"
+
+# Patterns go through `-e`: the private-key rule starts with "-----", which grep
+# otherwise parses as an option bundle (the previous version of this hook hit
+# exactly that and silently swallowed the error).
+scan() {  # scan <pattern>
+    local out status
+    set +e
+    out="$(printf '%s' "$blob" | grep -nE -e "$1")"
+    status=$?
+    set -e
+    if (( status > 1 )); then
+        echo "❌ Hook error — grep failed on pattern: $1" >&2
+        exit 1
+    fi
+    printf '%s' "$out"
+}
+
+scan_i() {  # scan <pattern>, case-insensitive
+    local out status
+    set +e
+    out="$(printf '%s' "$blob" | grep -niE -e "$1")"
+    status=$?
+    set -e
+    if (( status > 1 )); then
+        echo "❌ Hook error — grep failed on pattern: $1" >&2
+        exit 1
+    fi
+    printf '%s' "$out"
+}
+
+# -z keeps paths raw: git otherwise C-quotes anything non-ASCII or containing a
+# space ("caf\303\251.env"), which a plain read loop would then fail to find.
+while IFS= read -r -d '' file; do
+    [[ -z "$file" ]] && continue
+
+    # Binary staged content can still hold key material (.pfx, .p12, .jks,
+    # .kdbx) but cannot be grepped — and a command substitution strips NULs, so
+    # the blob itself can't be tested for them. Ask git: --numstat reports
+    # "-<TAB>-" for binary. Don't pretend it was scanned; make the human look.
+    if [[ "$(git diff --cached --numstat -- "$file" | cut -f1-2)" == $'-\t-' ]]; then
+        flag "$file" "Binary file staged — cannot be scanned, verify by hand" "(binary content)"
+        continue
+    fi
+
+    blob="$(staged_blob "$file")"
+    [[ -z "$blob" ]] && continue
+
+    # Private key material. `[A-Z ]*` covers the unprefixed PKCS#8 header — the
+    # one openssl genpkey and GCP service-account JSON emit — as well as
+    # ENCRYPTED/RSA/EC/DSA/OPENSSH/PGP.
+    #
+    # The header is assembled from two halves rather than written out, so this
+    # file does not trip its own rule. A hook you must `--no-verify` past just to
+    # edit the hook is a hook that stops getting run.
+    m=$(scan "${_PEM_HEAD} [A-Z ]*PRIVATE KEY|${_PUTTY_HEAD}")
+    [[ -n "$m" ]] && flag "$file" "Private key material" "$m"
+
+    # AWS access keys (long-term AKIA, temporary ASIA, service ABIA/ACCA)
+    m=$(scan '(AKIA|ASIA|ABIA|ACCA)[0-9A-Z]{16}')
+    [[ -n "$m" ]] && flag "$file" "AWS access key" "$m"
+
+    # GitHub tokens
+    m=$(scan 'gh[pousr]_[A-Za-z0-9]{36}|github_pat_[A-Za-z0-9_]{10,}')
+    [[ -n "$m" ]] && flag "$file" "GitHub token" "$m"
+
+    # Slack tokens
+    m=$(scan 'xox[baprse]-[A-Za-z0-9-]{10,}')
+    [[ -n "$m" ]] && flag "$file" "Slack token" "$m"
+
+    # Stripe keys
+    m=$(scan '(sk|pk|rk)_(live|test)_[A-Za-z0-9]{16,}')
+    [[ -n "$m" ]] && flag "$file" "Stripe key" "$m"
+
+    # AI / package-registry tokens — the classes most likely to leak from an
+    # AI-harness dotfiles setup (~/.omp, ~/.agents, ~/.claude).
+    m=$(scan 'sk-ant-[A-Za-z0-9_-]{20,}|sk-proj-[A-Za-z0-9_-]{20,}|sk-[A-Za-z0-9]{32,}|AIza[0-9A-Za-z_-]{35}|npm_[A-Za-z0-9]{36}|pypi-[A-Za-z0-9_-]{16,}|hf_[A-Za-z0-9]{30,}|glpat-[A-Za-z0-9_-]{20,}')
+    [[ -n "$m" ]] && flag "$file" "API token (AI provider / package registry)" "$m"
+
+    # JSON Web Tokens
+    m=$(scan 'eyJ[A-Za-z0-9_-]{10,}\.eyJ[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]{10,}')
+    [[ -n "$m" ]] && flag "$file" "JSON Web Token" "$m"
+
+    # Azure / cloud credentials
+    m=$(scan_i '(AZURE_CLIENT_SECRET|AZURE_TENANT_ID|AZURE_SUBSCRIPTION_ID)[[:space:]]*[:=][[:space:]]*[^$<[:space:]{]')
+    [[ -n "$m" ]] && flag "$file" "Azure credential" "$m"
+
+    # Azure Storage / Service Bus shared keys
+    m=$(scan_i '(AccountKey|SharedAccessKey)=[A-Za-z0-9+/]{20,}')
+    [[ -n "$m" ]] && flag "$file" "Azure shared key" "$m"
+
+    # Hardcoded DB / service passwords (value is not a variable or placeholder)
+    m=$(scan_i '(SA_PASSWORD|SEQ_PASSWORD|DB_PASSWORD|MYSQL_PASSWORD|POSTGRES_PASSWORD|MSSQL_SA_PASSWORD)[[:space:]]*[:=][[:space:]]*[A-Za-z0-9!@#%^&*]{4,}')
+    [[ -n "$m" ]] && flag "$file" "Hardcoded service password" "$m"
+
+    # Generic token/secret assignments with quoted real-looking values (20+ chars)
+    m=$(scan_i '(api_key|apikey|access_token|client_secret|bearer_token|secret_key)[[:space:]]*[:=][[:space:]]*['"'"'"][A-Za-z0-9+/!@#$%^&*_-]{20,}['"'"'"]')
+    [[ -n "$m" ]] && flag "$file" "Token or secret value" "$m"
+
+    # URI connection strings with embedded credentials
+    m=$(scan_i '(mongodb(\+srv)?|postgres(ql)?|mysql|mssql|sqlserver|redis|amqps?|https?)://[^:[:space:]/]+:[^@[:space:]${}]{4,}@')
+    [[ -n "$m" ]] && flag "$file" "Connection string with credentials" "$m"
+
+    # ADO.NET / ODBC style connection strings. Anchored on a real connection-
+    # string key (Server=/Data Source=/Initial Catalog=) so that a bare
+    # `password=` in prose or a CLI flag doesn't fire — a hook that cries wolf
+    # gets --no-verify'd, which is worse than no hook.
+    m=$(scan_i '(Server|Data Source|Initial Catalog|User ID)[[:space:]]*=[^;]*;([^;]*;)*[[:space:]]*(Password|Pwd)[[:space:]]*=[[:space:]]*[^;$<[:space:]"'"'"']')
+    [[ -n "$m" ]] && flag "$file" "Connection string with password" "$m"
+
+    # Personal email addresses outside common placeholders (git@<host> is SSH
+    # remote syntax, not a personal email — the user is always literally "git";
+    # .example is the RFC 2606 reserved placeholder TLD for docs). The angle-
+    # bracket form `Name <addr>` is deliberately NOT excluded — it is the most
+    # common way a real address shows up.
+    m=$(scan '[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}' \
+        | grep -v 'noreply@\|noemail@noemail\|example\.com\|example\.org\|example\.net\|\.example\b\|git@[a-zA-Z0-9.-]*' || true)
+    [[ -n "$m" ]] && flag "$file" "Personal email address" "$m"
+
+    # Internal IP ranges (10.x, 172.16-31.x, 192.168.x)
+    m=$(scan '(^|[^0-9.])(10\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}|172\.(1[6-9]|2[0-9]|3[01])\.[0-9]{1,3}\.[0-9]{1,3}|192\.168\.[0-9]{1,3}\.[0-9]{1,3})([^0-9.]|$)')
+    [[ -n "$m" ]] && flag "$file" "Internal IP address" "$m"
+
+done < <(git diff --cached --name-only --diff-filter=ACM -z)
+
+if [[ $violations -gt 0 ]]; then
+    echo ""
+    echo "❌ Commit blocked — ${violations} potential secret(s) detected."
+    echo "   Review the findings above. False positive? git commit --no-verify."
+    exit 1
+fi
+
+echo "✅ Security screening passed."
+exit 0

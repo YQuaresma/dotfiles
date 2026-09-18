@@ -1,0 +1,67 @@
+[user]
+	name = Yuri Quaresma
+	email = noemail@noemail.com
+
+[credential "https://github.com"]
+	helper =
+	helper = !gh auth git-credential
+
+[credential "https://gist.github.com"]
+	helper =
+	helper = !gh auth git-credential
+
+[alias]
+    ch     = checkout
+    cm     = commit -m
+    f      = fetch --all --prune --auto-gc
+    l      = log --oneline --graph --max-count=20
+    pf     = push --force-with-lease
+    st     = status --short --branch
+    sw     = switch
+    sw-dev  = switch develop
+    sw-main = switch main
+    rb-dev  = pull --rebase origin develop
+    rb-main = pull --rebase origin main
+
+[pull]
+    ff = only
+
+[push]
+    autoSetupRemote = true
+
+[init]
+    defaultBranch = main
+
+[gpg]
+    program = gpg
+
+[commit]
+	template = ~/.gitcommit_msg
+    gpgSign = false
+
+[core]
+	excludesfile = ~/.gitignore_global
+    editor = code --wait
+	autocrlf = input
+    hooksPath = ~/.githooks
+
+[difftool "sourcetree"]
+	cmd = opendiff \"$LOCAL\" \"$REMOTE\"
+	path = 
+
+[mergetool "sourcetree"]
+	cmd = /Applications/Sourcetree.app/Contents/Resources/opendiff-w.sh \"$LOCAL\" \"$REMOTE\" -ancestor \"$BASE\" -merge \"$MERGED\"
+	trustExitCode = true
+    keepBackup = false
+
+[includeIf "gitdir/i:~/.dotfiles/.git"]
+    path = ~/.gitconfig_personal
+
+[includeIf "gitdir/i:~/Developer/Repos/dotfiles/"]
+    path = ~/.gitconfig_personal
+
+[includeIf "gitdir/i:~/Developer/Repos/Personal/"]
+    path = ~/.gitconfig_personal
+
+[includeIf "gitdir/i:~/Developer/Repos/Work/"]
+    path = ~/.gitconfig_work
