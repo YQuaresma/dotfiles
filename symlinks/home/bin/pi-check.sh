@@ -47,7 +47,7 @@ BLOCK_PAGE_IPS=(
 # Domains used as the blocking probe. Default is a neutral ad/tracker domain
 # present in every stock Pi-hole blocklist; override with PI_CHECK_DOMAINS
 # (comma-separated) in the local config if you test a different category.
-IFS=',' read -ra TEST_DOMAINS <<< "${PI_CHECK_DOMAINS:-doubleclick.net,google-analytics.com}"
+IFS=',' read -ra TEST_DOMAINS <<< "${PI_CHECK_DOMAINS:-doubleclick.net,google-analytics.com,pornhub.com,xvideos.com,xnxx.com,xhamster.com,youporn.com,redtube.com,deviantart.com}"
 
 # ── Helpers ───────────────────────────────────────────────────────────────────
 warn()   { echo -e "${YELLOW}$*${NC}"; }
