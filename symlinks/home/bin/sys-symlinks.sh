@@ -21,6 +21,10 @@ SYMLINKS_HOME="$DOTFILES_DIR/symlinks/home"
 SYMLINKS_DEVELOPER="$DOTFILES_DIR/symlinks/Developer"
 source "${SCRIPT_DIR}/functions.sh"
 
+# Linux/macOS branch for the handful of OS-specific symlinks below (currently
+# only ~/.config/ghostty/config.linux, Ghostty's Linux-only keybind include).
+OS="$(detect_os)"
+
 if [[ ! -d "$REPO_ROOT/symlinks/home" ]]; then
     error "Cannot locate the repo root from ${SCRIPT_DIR} (got ${REPO_ROOT})."
     error "Run this script from its place in the clone: bash symlinks/home/bin/sys-symlinks.sh"
@@ -79,6 +83,13 @@ file_links=(
     "$SYMLINKS_HOME/.zshrc|$HOME/.zshrc"
     "$SYMLINKS_HOME/.zshrc.alias|$HOME/.zshrc.alias"
 )
+
+# Linux-only: Ghostty's Ctrl-based keybind include (loaded from the shared
+# config via `config-file = ?config.linux`). Not linked on macOS so the "?"
+# optional include stays a genuine no-op there instead of picking up Linux keybinds.
+if [[ "$OS" == "debian" ]]; then
+    file_links+=("$SYMLINKS_HOME/.config/ghostty/config.linux|$HOME/.config/ghostty/config.linux")
+fi
 
 renamed=()
 

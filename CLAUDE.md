@@ -125,7 +125,8 @@ Pi-hole scripts are self-contained and require a passwordless SSH key at `~/.ssh
 | `.bashrc`, `.bashrc.alias`, `.bashrc.private`, `.profile` | matching dotfile in `$HOME` (bash equivalent of `.zshrc`/`.zshrc.alias`/`.zshrc.private`; `.profile` is the login-shell PATH fallback) |
 | `.gitconfig`, `.gitignore_global` | matching dotfile in `$HOME` |
 | `.fzf.zsh`, `.p10k.zsh` | matching dotfile in `$HOME` |
-| `.config/ghostty/config` | `~/.config/ghostty/config` |
+| `.config/ghostty/config` | `~/.config/ghostty/config` (shared config; loads `.config/ghostty/config.linux` via `config-file = ?config.linux` for Linux-only Ctrl-based keybinds, so macOS keeps Ghostty's own Cmd-based defaults) |
+| `.config/ghostty/config.linux` | `~/.config/ghostty/config.linux` (optional include, only meaningful on Linux) |
 | `bin/` | `~/bin` (whole dir — utility scripts, setup/install scripts, `functions.sh`) |
 | `.agents/` | `~/.agents` (whole dir — skill packs, read directly by oh-my-pi's `agents` provider, Codex, and OpenCode); `.agents/skills` is also symlinked separately into `~/.claude/skills` since Claude Code only reads its own path |
 | `.agents/AGENTS.md` | Personal cross-project instructions, individually symlinked to every harness's own user-level filename: `~/.omp/agent/AGENTS.md`, `~/.claude/CLAUDE.md`, `~/.codex/AGENTS.md`, `~/.gemini/GEMINI.md`, `~/.config/opencode/AGENTS.md`, `~/.copilot/copilot-instructions.md` — one canonical file, six mount points |
