@@ -97,8 +97,8 @@ oh-my-zsh, fonts, azure-cli, awscli2, google-cloud-sdk, azurite, claude-code; as
 `ASDF_PLUGINS` list, always latest; full OS package-manager upgrade — `apt
 full-upgrade` / `brew upgrade`) → set Zsh as default shell (both OSes). Same
 script routine maintenance uses — install and update converge on one code path.
-A Python interpreter (via `uv`, which is Nix-managed), Docker, GUI apps, and
-Ghostty are **optional** — not run automatically; the
+A Python interpreter (via `uv`, which is Nix-managed), Docker, GUI apps,
+Ghostty, and Helium Browser are **optional** — not run automatically; the
 script prints their `install/*.sh` commands at the end.
 
 Package-manager stages delegate to a dedicated `install-*.sh` script in `install/`.
@@ -248,7 +248,7 @@ Node/Go/Terraform/pnpm/.NET SDK are asdf-managed on both OSes (`asdf uninstall <
 <version>`, no script pair).
 
 ```
-remove-apps-gui.sh   remove-azure-functions.sh
-remove-docker.sh     remove-omp.sh
+remove-apps-gui.sh   remove-azure-functions.sh   remove-ghostty.sh
+remove-docker.sh     remove-omp.sh               remove-helium.sh
 remove-python.sh
 ```
