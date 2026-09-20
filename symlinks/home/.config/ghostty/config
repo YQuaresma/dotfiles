@@ -4,7 +4,10 @@
 # This file loads BEFORE ~/Library/Application Support/com.mitchellh.ghostty/config
 # on macOS, so keep that file as template/comments only to avoid conflicts.
 
+# =============================================================================
+# Colors
 # Converted from Homebrew.terminal
+# =============================================================================
 background = #232321
 foreground = #FFF3DB
 cursor-color = #00FF00
@@ -12,6 +15,7 @@ cursor-color = #00FF00
 selection-background = #FFFFFF
 selection-foreground = #000000
 
+# Normal (0-7)
 palette = 0=#1A1A1A
 palette = 1=#FF4C4C
 palette = 2=#00FF00
@@ -21,6 +25,7 @@ palette = 5=#D783FF
 palette = 6=#5CE1FF
 palette = 7=#E6E6E6
 
+# Bright (8-15)
 palette = 8=#4D4D4D
 palette = 9=#FF6E6E
 palette = 10=#00FF00
@@ -30,21 +35,38 @@ palette = 13=#E6A8FF
 palette = 14=#7FEFFF
 palette = 15=#FFFFFF
 
+# =============================================================================
+# Font
+# =============================================================================
 font-family = "Inconsolata Nerd Font"
-font-size = 16
+font-size = 13
 font-style-bold = Bold
 
+# =============================================================================
+# Cursor
+# =============================================================================
 cursor-style = block
 cursor-style-blink = true
 bold-is-bright = true
 
-# Ubuntu host convention: Ctrl+C copies when there's a selection (matches
-# GNOME apps), otherwise falls through to the terminal as SIGINT.
-keybind = performable:ctrl+c=copy_to_clipboard:mixed
-keybind = ctrl+v=paste_from_clipboard
-keybind = ctrl+a=select_all
-keybind = ctrl+t=new_tab
-keybind = ctrl+q=quit
-keybind = ctrl+d=new_split:right
+# =============================================================================
+# Window
+# =============================================================================
+window-height = 40
+window-width = 160
 
+# =============================================================================
+# Shell integration
+# =============================================================================
 shell-integration-features = no-cursor
+
+# =============================================================================
+# Keybinds
+# Ctrl-based GNOME/Ubuntu conventions — split into a Linux-only include so
+# macOS keeps Ghostty's own Cmd-based defaults untouched. Ghostty's config
+# format has no inline platform-conditional block for arbitrary settings
+# (only theme files support that); the documented workaround is a separate
+# file loaded with the "?" optional-include prefix, which is a no-op if the
+# file doesn't exist (e.g. on macOS).
+# =============================================================================
+config-file = ?config.linux

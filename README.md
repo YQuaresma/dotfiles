@@ -278,7 +278,8 @@ its one file lands under `~/Developer` instead of directly under `$HOME`.
 | `symlinks/home/.bashrc`, `.bashrc.alias`, `.bashrc.private`, `.profile` | matching dotfile in `$HOME` (bash equivalent of `.zshrc`/`.zshrc.alias`/`.zshrc.private`; GUI session managers read `.profile` via `/bin/sh`, not `.zshrc`) |
 | `symlinks/home/.gitconfig`, `.gitignore_global` | matching dotfile in `$HOME` |
 | `symlinks/home/.fzf.zsh`, `.p10k.zsh` | matching dotfile in `$HOME` |
-| `symlinks/home/.config/ghostty/config` | `~/.config/ghostty/config` |
+| `symlinks/home/.config/ghostty/config` | `~/.config/ghostty/config` (shared config; loads `.config/ghostty/config.linux` via `config-file = ?config.linux` for Linux-only Ctrl-based keybinds, so macOS keeps Ghostty's own Cmd-based defaults) |
+| `symlinks/home/.config/ghostty/config.linux` | `~/.config/ghostty/config.linux` (optional include, only meaningful on Linux) |
 | `symlinks/home/bin/` | `~/bin` (whole dir) |
 | `symlinks/home/.agents/` | `~/.agents` (whole dir — skill packs; `ask-matt`, `code-review`, `codebase-design`, `diagnosing-bugs`, `domain-modeling`, `grill-me`, `grill-with-docs`, `grilling`, `implement`, `improve-codebase-architecture`, `prototype`, `research`, `resolving-merge-conflicts`, `setup-matt-pocock-skills`, `tdd`, `teach`, `to-questionnaire`, `to-spec`, `to-tickets`, `triage`, `wait-what`, `wayfinder`, `wizard`, `writing-for-agents` are sourced from [Matt Pocock's skills](https://github.com/mattpocock/skills); run `setup-matt-pocock-skills` once per repo before first use) |
 | `symlinks/home/.agents/AGENTS.md` | Personal cross-project instructions, symlinked individually to `~/.omp/agent/AGENTS.md`, `~/.claude/CLAUDE.md`, `~/.codex/AGENTS.md`, `~/.gemini/GEMINI.md`, `~/.config/opencode/AGENTS.md`, `~/.copilot/copilot-instructions.md` |
