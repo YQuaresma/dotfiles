@@ -36,6 +36,7 @@ print_banner() {
     echo -e "    bash $DOTFILES_DIR/install/install-docker.sh    # Docker Engine/Desktop"
     echo -e "    bash $DOTFILES_DIR/install/install-apps-gui.sh  # GUI apps (browsers, editors, dev tools)"
     echo -e "    bash $DOTFILES_DIR/install/install-ghostty.sh   # Ghostty terminal"
+    echo -e "    bash $DOTFILES_DIR/install/install-helium.sh    # Helium Browser"
 }
 
 # ---------------------------------

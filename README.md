@@ -243,6 +243,7 @@ bash ~/.dotfiles/install/install-python.sh    # Python interpreter, via Nix-mana
 bash ~/.dotfiles/install/install-docker.sh    # Docker Engine (Ubuntu) / Docker Desktop (macOS)
 bash ~/.dotfiles/install/install-apps-gui.sh  # GUI apps (browsers, editors, dev tools)
 bash ~/.dotfiles/install/install-ghostty.sh   # Ghostty terminal (Homebrew cask / apt)
+bash ~/.dotfiles/install/install-helium.sh    # Helium Browser (Homebrew cask / apt)
 ```
 
 - **macOS**: `install-apps-gui.sh` installs Homebrew casks (VS Code, Chrome, Firefox, GitKraken, Postman, Notion, Rectangle, and more)
@@ -355,6 +356,7 @@ Each remaining `install-*.sh` in `install/` has a matching `remove-*.sh` that re
 |--------|----------|-------------|
 | `remove-apps-gui.sh` | `install-apps-gui.sh` | Removes GUI apps (Homebrew casks / Snap packages) |
 | `remove-ghostty.sh` | `install-ghostty.sh` | Removes Ghostty terminal (Homebrew cask / apt) — **ad-hoc only, not run by `setup.sh`** |
+| `remove-helium.sh` | `install-helium.sh` | Removes Helium Browser (Homebrew cask / apt) — **ad-hoc only, not run by `setup.sh`** |
 | `remove-omp.sh` | `install-omp.sh` | Removes omp (Oh My Pi) — **ad-hoc only, not run by `setup.sh`** |
 | `remove-azure-functions.sh` | `install-azure-functions.sh` | Removes Azure Functions Core Tools — **ad-hoc only, not run by `setup.sh`** |
 | `remove-docker.sh` | `install-docker.sh` | Removes Docker Engine and Docker Desktop |
@@ -475,6 +477,7 @@ Both **macOS** and **Ubuntu** are fully migrated off Homebrew/apt for CLI/dev to
 | Neither — ad-hoc only | Azure Functions Core Tools (nixpkgs closure is missing `Microsoft.AspNetCore.App`, no working build possible) | `install/install-azure-functions.sh` / `install/remove-azure-functions.sh`, run manually, never by `setup.sh` |
 | Neither — ad-hoc only | omp (Oh My Pi) — not in nixpkgs; upstream brew tap/curl installer already auto-update, a Nix derivation would trade that for manual version+sha256 bumps per release | `install/install-omp.sh` / `install/remove-omp.sh`, run manually, never by `setup.sh` |
 | Neither — ad-hoc only | Ghostty terminal — no working from-source nixpkgs derivation on either OS (macOS needs Swift 6/xcodebuild, unsupported; Ubuntu's Nix build's GTK/Mesa/libwayland stack breaks EGL context creation at runtime) | `install/install-ghostty.sh` / `install/remove-ghostty.sh` (brew cask on macOS, apt on Ubuntu), run manually, never by `setup.sh` |
+| Neither — ad-hoc only | Helium Browser — no nixpkgs derivation exists (Chromium-fork browsers aren't packaged there); official installs are brew cask (macOS) or imputnet's own APT repo (Ubuntu, no snap build) | `install/install-helium.sh` / `install/remove-helium.sh`, run manually, never by `setup.sh` |
 
 ```bash
 # Apply changes after editing nix/home/packages.nix, nix/home/zsh.nix, or
