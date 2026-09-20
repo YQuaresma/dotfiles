@@ -1,0 +1,38 @@
+// Zed settings
+//
+// For information on how to configure Zed, see the Zed
+// documentation: https://zed.dev/docs/configuring-zed
+//
+// To see all of Zed's default settings without changing your
+// custom settings, run `zed: open default settings` from the
+// command palette (cmd-shift-p / ctrl-shift-p)
+{
+  "buffer_font_family": "Inconsolata Nerd Font",
+  "ui_font_family": ".ZedSans",
+  "autosave": {
+    "after_delay": {
+      "milliseconds": 1000
+    }
+  },
+  "project_panel": {
+    "hide_hidden": false,
+    "hide_root": false,
+    "bold_folder_labels": true,
+    "dock": "left",
+    "auto_reveal_entries": true,
+    "auto_fold_dirs": false
+  },
+  "icon_theme": {
+    "mode": "light",
+    "light": "VSCode Icons for Zed (Dark Official Icons)",
+    "dark": "Zed (Default)"
+  },
+  "base_keymap": "Zed",
+  "ui_font_size": 16.0,
+  "buffer_font_size": 16.0,
+  "theme": {
+    "mode": "dark",
+    "light": "One Light",
+    "dark": "JetBrains Islands Dark",
+  },
+}
