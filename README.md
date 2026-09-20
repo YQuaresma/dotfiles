@@ -222,7 +222,7 @@ sequentially without prompts:
 |---|-------|--------|-------|
 | 1 | Symlink dotfiles; also creates `~/.config`, `~/Developer/Repos/Personal`, `~/Developer/Repos/Work`, etc. and the `~/.dotfiles → ~/Developer/Repos/dotfiles` symlink | `symlinks/home/bin/sys-symlinks.sh` | Runs before package installs below |
 | 2 | Install packages | inline in `setup.sh` | apt: `build-essential`/`ca-certificates`/`software-properties-common` only (Ubuntu, one-time — no-op on macOS), Nix-managed rest (both OSes) |
-| 3 | Install Nix, then hand off to `sys-update.sh` for a full update pass | `nix/nix-install.sh`, `symlinks/home/bin/sys-update.sh` | `sys-update.sh` bumps `nix/flake.lock` and switches (CLI utils, azure-cli, awscli2, google-cloud-sdk, azurite, claude-code, fonts, oh-my-zsh/theme/plugins, `asdf` itself), installs/updates asdf tools (`ASDF_PLUGINS` list, always latest), and runs a full OS package-manager upgrade (`apt full-upgrade` / `brew upgrade`) — same script routine maintenance uses |
+| 3 | Install Nix, then hand off to `sys-update.sh` for a full update pass | `nix/nix-install.sh`, `symlinks/home/bin/sys-update.sh` | `sys-update.sh` bumps `nix/flake.lock` and switches (CLI utils, azure-cli, awscli2, google-cloud-sdk, azurite, claude-code, Zed editor, fonts, oh-my-zsh/theme/plugins, `asdf` itself), installs/updates asdf tools (`ASDF_PLUGINS` list, always latest), and runs a full OS package-manager upgrade (`apt full-upgrade` / `brew upgrade`) — same script routine maintenance uses |
 | 4 | Set Zsh as default shell | inline | Both OSes — macOS via `chsh`, Ubuntu via `usermod` |
 
 > **Both macOS and Ubuntu are fully migrated to Nix + asdf** — see the
@@ -281,6 +281,7 @@ its one file lands under `~/Developer` instead of directly under `$HOME`.
 | `symlinks/home/.fzf.zsh`, `.p10k.zsh` | matching dotfile in `$HOME` |
 | `symlinks/home/.config/ghostty/config` | `~/.config/ghostty/config` (shared config; loads `.config/ghostty/config.linux` via `config-file = ?config.linux` for Linux-only Ctrl-based keybinds, so macOS keeps Ghostty's own Cmd-based defaults) |
 | `symlinks/home/.config/ghostty/config.linux` | `~/.config/ghostty/config.linux` (optional include, only meaningful on Linux) |
+| `symlinks/home/.config/zed/settings.json` | `~/.config/zed/settings.json` (editor font, theme, keymap base, project panel prefs) |
 | `symlinks/home/bin/` | `~/bin` (whole dir) |
 | `symlinks/home/.agents/` | `~/.agents` (whole dir — skill packs; `ask-matt`, `code-review`, `codebase-design`, `diagnosing-bugs`, `domain-modeling`, `grill-me`, `grill-with-docs`, `grilling`, `implement`, `improve-codebase-architecture`, `prototype`, `research`, `resolving-merge-conflicts`, `setup-matt-pocock-skills`, `tdd`, `teach`, `to-questionnaire`, `to-spec`, `to-tickets`, `triage`, `wait-what`, `wayfinder`, `wizard`, `writing-for-agents` are sourced from [Matt Pocock's skills](https://github.com/mattpocock/skills); run `setup-matt-pocock-skills` once per repo before first use) |
 | `symlinks/home/.agents/AGENTS.md` | Personal cross-project instructions, symlinked individually to `~/.omp/agent/AGENTS.md`, `~/.claude/CLAUDE.md`, `~/.codex/AGENTS.md`, `~/.gemini/GEMINI.md`, `~/.config/opencode/AGENTS.md`, `~/.copilot/copilot-instructions.md` |
@@ -472,7 +473,7 @@ Both **macOS** and **Ubuntu** are fully migrated off Homebrew/apt for CLI/dev to
 
 | Layer | Owns | Config |
 |-------|------|--------|
-| Nix (home-manager, + nix-darwin on macOS) | CLI utils (`bat`, `eza`, `fzf`, `jq`, `zoxide`, …), `azure-cli`, `awscli2`, `google-cloud-sdk`, `azurite`, `claude-code`, Nerd Fonts, oh-my-zsh + Powerlevel10K + plugins, `asdf` itself | `nix/flake.nix`, `nix/home/packages.nix`, `nix/home/zsh.nix`, `nix/darwin/configuration.nix` (macOS fonts), `nix/home/fonts-linux.nix` (Ubuntu fonts) |
+| Nix (home-manager, + nix-darwin on macOS) | CLI utils (`bat`, `eza`, `fzf`, `jq`, `zoxide`, …), `azure-cli`, `awscli2`, `google-cloud-sdk`, `azurite`, `claude-code`, Zed editor, Nerd Fonts, oh-my-zsh + Powerlevel10K + plugins, `asdf` itself | `nix/flake.nix`, `nix/home/packages.nix`, `nix/home/zsh.nix`, `nix/darwin/configuration.nix` (macOS fonts), `nix/home/fonts-linux.nix` (Ubuntu fonts) |
 | asdf | Node.js, Go, Terraform, pnpm, .NET SDK | `symlinks/home/bin/sys-update.sh` (`ASDF_PLUGINS` list — source of truth, always latest) writes to `~/.tool-versions` directly (a real, local, untracked file — a record of what's installed, not hand-edited) |
 | Homebrew / apt (unchanged, permanently) | GUI apps (`install-apps-gui.sh`), Docker Engine/Desktop | `install/install-apps-gui.sh`, `install/install-docker.sh` — Docker has no working non-NixOS Nix path (no systemd/daemon wiring), stays brew cask (macOS) / apt (Ubuntu) by design |
 | Neither — ad-hoc only | Azure Functions Core Tools (nixpkgs closure is missing `Microsoft.AspNetCore.App`, no working build possible) | `install/install-azure-functions.sh` / `install/remove-azure-functions.sh`, run manually, never by `setup.sh` |
