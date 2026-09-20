@@ -1,9 +1,15 @@
 #!/usr/bin/env bash
-# Locates GitKraken's per-profile "profile" JSON file(s) (under
-# ~/.gitkraken/profiles/<hash>/profile on Linux, or GitKraken's equivalent
-# macOS support dir) and clears the "userEmail" and "userName" fields so the
-# app falls through to git's resolved user.name/user.email instead of a
-# stale/wrong override.
+# Clears GitKraken's stale/wrong cached email in two places:
+#   - the per-profile "profile" JSON file(s) (~/.gitkraken/profiles/<hash>/profile
+#     on Linux, or GitKraken's equivalent macOS support dir) — the "userEmail" field
+#   - the top-level "config" JSON (~/.gitkraken/config, or the macOS equivalent) —
+#     the "registration.email" field (the account login email)
+# Clearing either makes GitKraken fall through to git's resolved user.email
+# instead of the stale override.
+#
+# "userName"/"registration.name" are left untouched: GitKraken falls back to
+# the account registration name (not git config) when userName is blank, so
+# clearing it only replaces one wrong value with another.
 #
 # Usage: sys-gitkraken-clear-identity.sh [-d|--dry-run] [-h|--help]
 set -euo pipefail
@@ -47,57 +53,82 @@ if ! command -v jq >/dev/null 2>&1; then
     exit 1
 fi
 
+changed=0
+
+# clear_email FILE JQ_GET_EXPR JQ_SET_EXPR LABEL
+clear_email() {
+    local f="$1" get="$2" set="$3" label="$4"
+    local email
+    email="$(jq -r "$get // \"\"" "$f")"
+    printf "  %s (%s=%s)\n" "$f" "$label" "${email:-<empty>}"
+
+    if [[ -z "$email" ]]; then
+        success "  already clear, skipping"
+        return
+    fi
+
+    if $DRY_RUN; then
+        warn "  dry run — would clear $label"
+        return
+    fi
+
+    if confirm "Clear $label in $f?"; then
+        cp "$f" "${f}.bak"
+        jq "$set" "$f" > "${f}.tmp" && mv "${f}.tmp" "$f"
+        success "  cleared (backup: ${f}.bak)"
+        changed=$((changed + 1))
+    else
+        warn "  skipped"
+    fi
+}
+
 # GitKraken's config root: ~/.gitkraken on Linux, and the same layout under
 # macOS's Application Support dir. Both are checked; missing ones are skipped.
-search_dirs=(
+profile_dirs=(
     "$HOME/.gitkraken/profiles"
     "$HOME/Library/Application Support/GitKraken/profiles"
 )
+config_files=(
+    "$HOME/.gitkraken/config"
+    "$HOME/Library/Application Support/GitKraken/config"
+)
 
 profiles=()
-for dir in "${search_dirs[@]}"; do
+for dir in "${profile_dirs[@]}"; do
     [[ -d "$dir" ]] || continue
     while IFS= read -r -d '' f; do
         profiles+=("$f")
     done < <(find "$dir" -mindepth 2 -maxdepth 2 -type f -name "profile" -print0)
 done
 
-if [[ ${#profiles[@]} -eq 0 ]]; then
-    warn "No GitKraken profile files found under: ${search_dirs[*]}"
+configs=()
+for f in "${config_files[@]}"; do
+    [[ -f "$f" ]] && configs+=("$f")
+done
+
+if [[ ${#profiles[@]} -eq 0 && ${#configs[@]} -eq 0 ]]; then
+    warn "No GitKraken profile or config files found."
     exit 0
 fi
 
-info "Found ${#profiles[@]} GitKraken profile file(s):"
-changed=0
-for f in "${profiles[@]}"; do
-    email="$(jq -r '.userEmail // ""' "$f")"
-    name="$(jq -r '.userName // ""' "$f")"
-    printf "  %s (userEmail=%s, userName=%s)\n" "$f" "${email:-<empty>}" "${name:-<empty>}"
+if [[ ${#profiles[@]} -gt 0 ]]; then
+    info "Found ${#profiles[@]} GitKraken profile file(s):"
+    for f in "${profiles[@]}"; do
+        clear_email "$f" '.userEmail' '.userEmail = ""' "userEmail"
+    done
+fi
 
-    if [[ -z "$email" && -z "$name" ]]; then
-        success "  already clear, skipping"
-        continue
-    fi
-
-    if $DRY_RUN; then
-        warn "  dry run — would clear userEmail/userName"
-        continue
-    fi
-
-    if confirm "Clear userEmail/userName in $(basename "$(dirname "$f")")/profile?"; then
-        cp "$f" "${f}.bak"
-        jq '.userEmail = "" | .userName = ""' "$f" > "${f}.tmp" && mv "${f}.tmp" "$f"
-        success "  cleared (backup: ${f}.bak)"
-        changed=$((changed + 1))
-    else
-        warn "  skipped"
-    fi
-done
+if [[ ${#configs[@]} -gt 0 ]]; then
+    info "Found ${#configs[@]} GitKraken config file(s):"
+    for f in "${configs[@]}"; do
+        clear_email "$f" '.registration.email' '.registration.email = ""' "registration.email"
+    done
+fi
 
 echo
 if [[ $changed -gt 0 ]]; then
-    warn "Quit GitKraken fully before it overwrites this file, then relaunch to pick up the change."
-    success "Cleared userEmail/userName in ${changed} profile file(s)."
+    warn "Quit GitKraken fully before it overwrites these files, then relaunch to pick up the change."
+    success "Cleared email in ${changed} file(s)."
 else
     info "No changes made."
 fi
