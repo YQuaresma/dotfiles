@@ -32,11 +32,8 @@ print_banner() {
     echo -e "${BOLD}${ICON_WARN}${ICON_INFO} Please restart your terminal or run 'source ~/.zshrc' to apply changes.${ICON_INFO}${ICON_WARN}${RESET}"
     echo
     echo -e "${BOLD}${ICON_INFO} Optional installs (not run automatically):${RESET}"
-    echo -e "    bash $DOTFILES_DIR/install/install-python.sh    # Python via uv"
-    echo -e "    bash $DOTFILES_DIR/install/install-docker.sh    # Docker Engine/Desktop"
-    echo -e "    bash $DOTFILES_DIR/install/install-apps-gui.sh  # GUI apps (browsers, editors, dev tools)"
-    echo -e "    bash $DOTFILES_DIR/install/install-ghostty.sh   # Ghostty terminal"
-    echo -e "    bash $DOTFILES_DIR/install/install-helium.sh    # Helium Browser"
+    echo -e "    bash $DOTFILES_DIR/install/install-gui-apps.sh        # GUI apps (Homebrew casks / Snap / apt, OS-detected)"
+    echo -e "    bash $DOTFILES_DIR/install/install-docker.sh          # Docker Engine/Desktop"
 }
 
 # ---------------------------------
@@ -85,10 +82,7 @@ run-nix-install() {
 # claude-code, fonts, oh-my-zsh/theme/plugins, asdf itself), asdf dev tools
 # (always latest), and OS package manager (apt full-upgrade / brew upgrade). Same
 # script routine maintenance uses (sys-update.sh) — single source of truth, not
-# duplicated install-time logic. Azure Functions Core Tools stays out of this
-# pipeline entirely — nixpkgs still can't produce a working build (ASP.NET Core
-# runtime missing from the closure); install-azure-functions.sh /
-# remove-azure-functions.sh kept for ad-hoc/manual use.
+# duplicated install-time logic.
 run-sys-update() {
     bash "$DOTFILES_DIR/symlinks/home/bin/sys-update.sh"
     echo

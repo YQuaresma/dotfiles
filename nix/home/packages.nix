@@ -1,6 +1,5 @@
-# Non-dev CLI packages, plus GUI apps that build cleanly under Nix (unlike
-# Ghostty/Helium — see README's Nix + asdf exceptions table for why those stay
-# on Homebrew/apt instead).
+# Non-dev CLI packages (see README's Nix + asdf exceptions table for GUI apps
+# that stay outside Nix, e.g. Ghostty, Helium, Zed).
 { pkgs, ... }:
 
 {
@@ -40,8 +39,5 @@
     # Version managers (asdf, uv)
     asdf-vm
     uv
-
-    # GUI apps
-    zed-editor
   ];
 }
