@@ -3,7 +3,7 @@
 # its apt repo/keyring/pin files (or, for Zed/JetBrains Toolbox, their
 # ~/.local tarball installs — see below).
 # Ubuntu-only (install-gui-ubuntu.sh is a no-op on macOS, where these stay
-# Homebrew casks managed by remove-gui-cask.sh).
+# Homebrew casks managed by remove-gui-macos.sh).
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
@@ -26,7 +26,7 @@ remove_apt_repo() {
 
 main() {
     if [[ "$OS" != "debian" ]]; then
-        warn "remove-gui-ubuntu.sh is Ubuntu-only — these apps are Homebrew casks on macOS, use remove-gui-cask.sh."
+        warn "remove-gui-ubuntu.sh is Ubuntu-only — these apps are Homebrew casks on macOS, use remove-gui-macos.sh."
         exit 0
     fi
 
@@ -62,9 +62,8 @@ main() {
     # JetBrains Toolbox — no apt/dpkg package to remove; installed as a
     # checksummed tarball under ~/Applications (see install-gui-ubuntu.sh's
     # install_jetbrains_toolbox comment). Leaves ~/.local/share/JetBrains
-    # (Toolbox's own app data plus any IDEs it manages) untouched — same
-    # convention as remove-python.sh not wiping venvs; that data was created
-    # by the app at runtime, not by this install script.
+    # (Toolbox's own app data plus any IDEs it manages) untouched — that data
+    # was created by the app at runtime, not by this install script.
     if [[ -x "$HOME/Applications/jetbrains-toolbox/bin/jetbrains-toolbox" ]]; then
         rm -rf "$HOME/Applications/jetbrains-toolbox"
         rm -f "$HOME/.local/bin/jetbrains-toolbox"

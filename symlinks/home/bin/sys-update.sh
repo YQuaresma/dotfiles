@@ -183,6 +183,75 @@ update_nix() {
 }
 
 # ---------------------------------
+# Update Python (uv-managed)
+# ---------------------------------
+# uv itself is Nix-managed (nix/home/packages.nix); this installs a Python
+# interpreter with it if missing, or upgrades it to the latest patch otherwise.
+update_python() {
+    banner "Updating Python (via uv)..."
+
+    if ! command -v uv &>/dev/null; then
+        warn "uv not found — skipping Python update (run update_nix first)."
+        return 1
+    fi
+
+    # --managed-python restricts the listing to uv-managed interpreters; a
+    # system python3 (e.g. Ubuntu's) would otherwise show under --only-installed
+    # and mask a missing uv-managed install.
+    if ! uv python list --only-installed --managed-python 2>/dev/null | grep -q .; then
+        uv python install
+        success "Python installed: $(uv python list --only-installed --managed-python | head -1)"
+        return
+    fi
+
+    uv python upgrade
+    success "Python: $(uv python list --only-installed --managed-python | head -1)"
+}
+
+# ---------------------------------
+# Update omp (Oh My Pi)
+# ---------------------------------
+# omp (https://github.com/can1357/oh-my-pi) is not in nixpkgs. Installs it via the
+# upstream path if absent — macOS: can1357/tap Homebrew tap; Ubuntu: the official
+# curl installer (prebuilt binary into ~/.local/bin). If present, updates it:
+# macOS via `brew upgrade` (keeps brew's bookkeeping consistent), Ubuntu via omp's
+# built-in self-updater `omp update`.
+update_omp() {
+    banner "Updating omp (Oh My Pi)..."
+
+    if ! command -v omp &>/dev/null; then
+        if [[ "$OS" == "macos" ]]; then
+            brew tap can1357/tap
+            brew install can1357/tap/omp
+        elif [[ "$OS" == "debian" ]]; then
+            # Third-party, unpinned installer. It is not checksum- or
+            # signature-verified upstream, so the only controls available are
+            # transport ones: pin the scheme for the initial request AND every
+            # redirect, and download to a file first so a truncated transfer
+            # cannot be half-executed by `sh`.
+            warn "omp.sh/install is third-party code fetched at HEAD — review it if that matters to you."
+            local omp_installer
+            omp_installer="$(mktemp)"
+            trap 'rm -f "$omp_installer"' RETURN
+            curl --proto '=https' --proto-redir '=https' --tlsv1.2 -fsSL \
+                https://omp.sh/install -o "$omp_installer"
+            sh "$omp_installer"
+        else
+            error "Unsupported OS: ${OS}"; return 1
+        fi
+        success "omp installed: $(omp --version 2>/dev/null | head -1)"
+        return
+    fi
+
+    if [[ "$OS" == "macos" ]]; then
+        brew upgrade can1357/tap/omp
+    else
+        omp update
+    fi
+    success "omp: $(omp --version 2>/dev/null | head -1)"
+}
+
+# ---------------------------------
 # Update asdf Dev Tools
 # ---------------------------------
 # Installs/updates every plugin in ASDF_PLUGINS to its latest available release,
@@ -248,6 +317,8 @@ main() {
     update_dotfiles_repo
     update_system_packages
     update_nix || had_warnings=1
+    update_python || had_warnings=1
+    update_omp || had_warnings=1
     update_asdf || had_warnings=1
 
     check_reboot_required

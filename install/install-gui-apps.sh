@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Installs every GUI app for the current OS, dispatching to the package-manager
-# scripts that actually do the work: install-gui-cask.sh (Homebrew, macOS),
+# scripts that actually do the work: install-gui-macos.sh (Homebrew, macOS),
 # install-gui-ubuntu.sh (apt repos/packages/tarballs/installers, Ubuntu).
 # Each of those already self-detects OS and no-ops on the wrong one, so
 # running them individually is equally safe; this just saves knowing which
@@ -15,7 +15,7 @@ source "${SCRIPT_DIR}/../symlinks/home/bin/functions.sh"
 OS="$(detect_os)"
 
 if [[ "$OS" == "macos" ]]; then
-    bash "${SCRIPT_DIR}/install-gui-cask.sh"
+    bash "${SCRIPT_DIR}/install-gui-macos.sh"
 
 elif [[ "$OS" == "debian" ]]; then
     bash "${SCRIPT_DIR}/install-gui-ubuntu.sh"

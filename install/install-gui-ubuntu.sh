@@ -3,7 +3,7 @@
 # a plain apt package, a downloaded .deb, JetBrains' official checksummed
 # tarball, Postman's official (unchecksummed) tarball, or (Zed) an official
 # curl installer with no apt/dpkg involvement at all. macOS already gets
-# these via Homebrew casks in install-gui-cask.sh — this script is
+# these via Homebrew casks in install-gui-macos.sh — this script is
 # Ubuntu-only.
 #
 # Most apps below have an official, vendor-published apt repo that GUI_SNAPS
@@ -141,7 +141,7 @@ install_ghostty() {
 # in this file has SOME apt/dpkg touchpoint, GitKraken's is just weaker
 # (a one-off download, not a repo apt can auto-update from). No GPG
 # signature exists to pin — same HTTPS-transport-only trust tier as
-# install-omp.sh's curl installer and this file's own install_zed.
+# sys-update.sh's `update_omp` curl installer and this file's own install_zed.
 # Re-run this function to pick up a newer release; `apt` alone won't see
 # updates since there's no repo.
 # ------------------------------------------
@@ -182,7 +182,7 @@ install_helium() {
 # "jnsougata" — do not reintroduce it). JetBrains' own releases API resolves
 # the current stable Linux tarball AND its sha256 checksum, verified below
 # before extraction — a real integrity check, unlike install_zed/
-# install-omp.sh's curl installers, which only get HTTPS-transport trust.
+# sys-update.sh's `update_omp` curl installers, which only get HTTPS-transport trust.
 # https://www.jetbrains.com/help/toolbox-app/installation.html
 #
 # No silent-install flag exists on Linux (JetBrains' own docs: "For Linux
@@ -262,7 +262,7 @@ install_ngrok() {
 # Postman — official download, no apt/dpkg/Snap involvement. Postman's own
 # docs recommend Snap ("bundles all needed libraries") and don't publish a
 # checksum for this tarball, so this is HTTPS-transport-only trust — same
-# tier as install_zed/install-omp.sh's curl installers, weaker than
+# tier as install_zed/sys-update.sh's `update_omp` curl installers, weaker than
 # install_jetbrains_toolbox's checksummed download.
 # https://learning.postman.com/docs/getting-started/installation/install-app
 # ------------------------------------------
@@ -331,7 +331,7 @@ install_vscode() {
 # group-membership changes and long-running server processes on this
 # machine, so this script uses the official installer instead. No GPG
 # signature to pin — same HTTPS-transport-only trust tier as
-# install-omp.sh's curl installer.
+# sys-update.sh's `update_omp` curl installer.
 # ------------------------------------------
 install_zed() {
     if command -v zed &>/dev/null; then
@@ -351,7 +351,7 @@ install_zed() {
 # --------------------------------------------------
 main() {
     if [[ "$OS" != "debian" ]]; then
-        warn "install-gui-ubuntu.sh is Ubuntu-only — these apps are already Homebrew casks via install-gui-cask.sh on macOS."
+        warn "install-gui-ubuntu.sh is Ubuntu-only — these apps are already Homebrew casks via install-gui-macos.sh on macOS."
         exit 0
     fi
 

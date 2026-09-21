@@ -222,24 +222,17 @@ sequentially without prompts:
 |---|-------|--------|-------|
 | 1 | Symlink dotfiles; also creates `~/.config`, `~/Developer/Repos/Personal`, `~/Developer/Repos/Work`, etc. and the `~/.dotfiles → ~/Developer/Repos/dotfiles` symlink | `symlinks/home/bin/sys-symlinks.sh` | Runs before package installs below |
 | 2 | Install packages | inline in `setup.sh` | apt: `build-essential`/`ca-certificates`/`software-properties-common` only (Ubuntu, one-time — no-op on macOS), Nix-managed rest (both OSes) |
-| 3 | Install Nix, then hand off to `sys-update.sh` for a full update pass | `nix/nix-install.sh`, `symlinks/home/bin/sys-update.sh` | `sys-update.sh` bumps `nix/flake.lock` and switches (CLI utils, azure-cli, awscli2, google-cloud-sdk, azurite, claude-code, fonts, oh-my-zsh/theme/plugins, `asdf` itself), installs/updates asdf tools (`ASDF_PLUGINS` list, always latest), and runs a full OS package-manager upgrade (`apt full-upgrade` / `brew upgrade`) — same script routine maintenance uses |
+| 3 | Install Nix, then hand off to `sys-update.sh` for a full update pass | `nix/nix-install.sh`, `symlinks/home/bin/sys-update.sh` | `sys-update.sh` bumps `nix/flake.lock` and switches (CLI utils, azure-cli, awscli2, google-cloud-sdk, azurite, claude-code, fonts, oh-my-zsh/theme/plugins, `asdf` itself), installs/updates Python via uv, installs/updates omp (Oh My Pi), installs/updates asdf tools (`ASDF_PLUGINS` list, always latest), and runs a full OS package-manager upgrade (`apt full-upgrade` / `brew upgrade`) — same script routine maintenance uses |
 | 4 | Set Zsh as default shell | inline | Both OSes — macOS via `chsh`, Ubuntu via `usermod` |
 
 > **Both macOS and Ubuntu are fully migrated to Nix + asdf** — see the
 > [Nix + asdf](#nix--asdf-macos--ubuntu) section below.
->
-> **Azure Functions Core Tools is not part of this pipeline on either OS** — nixpkgs still
-> can't produce a working build (missing ASP.NET Core runtime in the dependency closure), so
-> it was dropped from automated setup rather than kept on Homebrew/apt indefinitely.
-> `install/install-azure-functions.sh` / `install/remove-azure-functions.sh` remain for
-> ad-hoc/manual installs.
 
-### Optional: Python, Docker, GUI Apps
+### Optional: Docker, GUI Apps
 
 `setup.sh` doesn't run these automatically — install what you need manually:
 
 ```bash
-bash ~/.dotfiles/install/install-python.sh    # Python interpreter, via Nix-managed uv
 bash ~/.dotfiles/install/install-docker.sh    # Docker Engine (Ubuntu) / Docker Desktop (macOS)
 bash ~/.dotfiles/install/install-gui-apps.sh  # GUI apps — detects OS, runs the scripts below for you
 ```
@@ -249,25 +242,25 @@ if you only want one package manager:
 
 | Name | macOS | Ubuntu |
 |---|---|---|
-| 1Password | Homebrew cask [`install-gui-cask.sh`] | apt repo [`install-gui-ubuntu.sh`] |
-| balenaEtcher | Homebrew cask [`install-gui-cask.sh`] | — |
-| Claude | Homebrew cask [`install-gui-cask.sh`] | — |
-| Firefox | Homebrew cask [`install-gui-cask.sh`] | apt repo [`install-gui-ubuntu.sh`] |
-| Ghostty | Homebrew cask [`install-gui-cask.sh`] | apt package, no repo [`install-gui-ubuntu.sh`] |
-| GitKraken | Homebrew cask [`install-gui-cask.sh`] | downloaded `.deb` [`install-gui-ubuntu.sh`] |
-| Google Chrome | Homebrew cask [`install-gui-cask.sh`] | — |
-| Helium Browser | Homebrew cask [`install-gui-cask.sh`] | apt repo [`install-gui-ubuntu.sh`] |
-| JetBrains Toolbox | Homebrew cask [`install-gui-cask.sh`] | checksummed tarball, no apt/dpkg [`install-gui-ubuntu.sh`] |
-| MeetingBar | Homebrew cask [`install-gui-cask.sh`] | — |
-| Meld | Homebrew cask [`install-gui-cask.sh`] | — |
-| ngrok | Homebrew cask [`install-gui-cask.sh`] | apt repo [`install-gui-ubuntu.sh`] |
-| Notion | Homebrew cask [`install-gui-cask.sh`] | Snap `notion-desktop` [`install-gui-snap.sh`] |
-| Postman | Homebrew cask [`install-gui-cask.sh`] | official tarball, no apt/dpkg [`install-gui-ubuntu.sh`] |
-| Rectangle | Homebrew cask [`install-gui-cask.sh`] | — |
-| Sourcetree | Homebrew cask [`install-gui-cask.sh`] | — |
-| VS Code | Homebrew cask [`install-gui-cask.sh`] | apt repo [`install-gui-ubuntu.sh`] |
-| WhatsApp | Homebrew cask [`install-gui-cask.sh`] | — |
-| Zed | Homebrew cask [`install-gui-cask.sh`] | curl installer, no apt/dpkg [`install-gui-ubuntu.sh`] |
+| 1Password | Homebrew cask [`install-gui-macos.sh`] | apt repo [`install-gui-ubuntu.sh`] |
+| balenaEtcher | Homebrew cask [`install-gui-macos.sh`] | — |
+| Claude | Homebrew cask [`install-gui-macos.sh`] | — |
+| Firefox | Homebrew cask [`install-gui-macos.sh`] | apt repo [`install-gui-ubuntu.sh`] |
+| Ghostty | Homebrew cask [`install-gui-macos.sh`] | apt package, no repo [`install-gui-ubuntu.sh`] |
+| GitKraken | Homebrew cask [`install-gui-macos.sh`] | downloaded `.deb` [`install-gui-ubuntu.sh`] |
+| Google Chrome | Homebrew cask [`install-gui-macos.sh`] | — |
+| Helium Browser | Homebrew cask [`install-gui-macos.sh`] | apt repo [`install-gui-ubuntu.sh`] |
+| JetBrains Toolbox | Homebrew cask [`install-gui-macos.sh`] | checksummed tarball, no apt/dpkg [`install-gui-ubuntu.sh`] |
+| MeetingBar | Homebrew cask [`install-gui-macos.sh`] | — |
+| Meld | Homebrew cask [`install-gui-macos.sh`] | — |
+| ngrok | Homebrew cask [`install-gui-macos.sh`] | apt repo [`install-gui-ubuntu.sh`] |
+| Notion | Homebrew cask [`install-gui-macos.sh`] | Snap `notion-desktop` [`install-gui-snap.sh`] |
+| Postman | Homebrew cask [`install-gui-macos.sh`] | official tarball, no apt/dpkg [`install-gui-ubuntu.sh`] |
+| Rectangle | Homebrew cask [`install-gui-macos.sh`] | — |
+| Sourcetree | Homebrew cask [`install-gui-macos.sh`] | — |
+| VS Code | Homebrew cask [`install-gui-macos.sh`] | apt repo [`install-gui-ubuntu.sh`] |
+| WhatsApp | Homebrew cask [`install-gui-macos.sh`] | — |
+| Zed | Homebrew cask [`install-gui-macos.sh`] | curl installer, no apt/dpkg [`install-gui-ubuntu.sh`] |
 
 ## Applying Dotfiles Only
 
@@ -365,25 +358,18 @@ single commit with `git commit --no-verify`.
 > azurite/claude-code go through `~/.dotfiles/nix/home/packages.nix` + `nix/nix-switch.sh`;
 > Node/Go/Terraform/pnpm/.NET SDK go through `asdf uninstall <name> <version>` +
 > `~/.tool-versions` (a real, local, untracked file — not repo-managed). Neither uses install/remove script pairs — see
-> [Nix + asdf](#nix--asdf-macos--ubuntu) below. `install/install-azure-functions.sh` /
-> `install/remove-azure-functions.sh` are kept on both OSes for ad-hoc/manual use only — Azure
-> Functions Core Tools isn't installed by `setup.sh` on either platform (nixpkgs
-> still can't produce a working build; not worth keeping on Homebrew/apt indefinitely for
-> that reason alone). Docker stays apt/brew-managed permanently on both OSes (no working
+> [Nix + asdf](#nix--asdf-macos--ubuntu) below. Docker stays apt/brew-managed permanently on both OSes (no working
 > non-NixOS Nix path).
 
 Each remaining `install-*.sh` in `install/` has a matching `remove-*.sh` that reverses its changes:
 
 | Script | Reverses | Description |
 |--------|----------|-------------|
-| `remove-gui-apps.sh` | `install-gui-apps.sh` | OS-dispatch wrapper — removes GUI apps by calling `remove-gui-cask.sh` (macOS) or `remove-gui-snap.sh` + `remove-gui-ubuntu.sh` (Ubuntu) |
-| `remove-gui-cask.sh` | `install-gui-cask.sh` | Removes GUI apps installed via Homebrew casks (macOS only) |
+| `remove-gui-apps.sh` | `install-gui-apps.sh` | OS-dispatch wrapper — removes GUI apps by calling `remove-gui-macos.sh` (macOS) or `remove-gui-snap.sh` + `remove-gui-ubuntu.sh` (Ubuntu) |
+| `remove-gui-macos.sh` | `install-gui-macos.sh` | Removes GUI apps installed via Homebrew casks (macOS only) |
 | `remove-gui-snap.sh` | `install-gui-snap.sh` | Removes GUI apps installed via Snap, no official apt path (Ubuntu only) |
 | `remove-gui-ubuntu.sh` | `install-gui-ubuntu.sh` | Removes GUI apps installed via official apt repos, plain apt packages, or (Zed, JetBrains Toolbox) an official installer (Ubuntu only) — **ad-hoc only, not run by `setup.sh`** |
-| `remove-omp.sh` | `install-omp.sh` | Removes omp (Oh My Pi) — **ad-hoc only, not run by `setup.sh`** |
-| `remove-azure-functions.sh` | `install-azure-functions.sh` | Removes Azure Functions Core Tools — **ad-hoc only, not run by `setup.sh`** |
 | `remove-docker.sh` | `install-docker.sh` | Removes Docker Engine and Docker Desktop |
-| `remove-python.sh` | `install-python.sh` | Removes uv-managed Python versions (uv itself is Nix-managed, not removed here) |
 
 **Deleted, no longer exist** (fully superseded by Nix/asdf on both OSes — see
 [Nix + asdf](#nix--asdf-macos--ubuntu)): `install-ohmyzsh.sh`, `remove-ohmyzsh.sh`,
@@ -396,14 +382,20 @@ Each remaining `install-*.sh` in `install/` has a matching `remove-*.sh` that re
 reverse manually with `sudo apt remove -y build-essential ca-certificates
 software-properties-common && sudo apt autoremove -y` if ever needed), `install-asdf.sh`
 (folded into `symlinks/home/bin/sys-update.sh`'s `update_asdf()` — `ASDF_PLUGINS`/
-`ASDF_PLUGIN_REPOS` now live there, single call site, no need for a separate script).
+`ASDF_PLUGIN_REPOS` now live there, single call site, no need for a separate script),
+`install-python.sh`, `remove-python.sh` (folded into `symlinks/home/bin/sys-update.sh`'s
+`update_python()` — installs the latest uv-managed Python if missing, upgrades it otherwise;
+uninstall ad-hoc with `uv python uninstall --all`), `install-omp.sh`, `remove-omp.sh` (folded into
+`symlinks/home/bin/sys-update.sh`'s `update_omp()` — installs omp via the upstream brew
+tap/curl installer if missing, updates it otherwise; uninstall ad-hoc with `brew uninstall
+can1357/tap/omp` on macOS or `rm ~/.local/bin/omp` on Ubuntu).
 
 **Also deleted, folded elsewhere** (not superseded by Nix — see the "Neither"
 rows in [Nix + asdf](#nix--asdf-macos--ubuntu) for why each still needs its
 own package manager): `install-ghostty.sh`, `remove-ghostty.sh`,
 `install-helium.sh`, `remove-helium.sh`, `install-zed.sh`, `remove-zed.sh` —
 each was a standalone macOS-cask/Ubuntu-install script; folded into
-`install-gui-cask.sh`/`install-gui-ubuntu.sh` (and their `remove-*` counterparts)
+`install-gui-macos.sh`/`install-gui-ubuntu.sh` (and their `remove-*` counterparts)
 once those existed, so every GUI app installs from the same three scripts
 regardless of package manager.
 
@@ -505,9 +497,8 @@ Both **macOS** and **Ubuntu** are fully migrated off Homebrew/apt for CLI/dev to
 |-------|------|--------|
 | Nix (home-manager, + nix-darwin on macOS) | CLI utils (`bat`, `eza`, `fzf`, `jq`, `zoxide`, …), `azure-cli`, `awscli2`, `google-cloud-sdk`, `azurite`, `claude-code`, Nerd Fonts, oh-my-zsh + Powerlevel10K + plugins, `asdf` itself | `nix/flake.nix`, `nix/home/packages.nix`, `nix/home/zsh.nix`, `nix/darwin/configuration.nix` (macOS fonts), `nix/home/fonts-linux.nix` (Ubuntu fonts) |
 | asdf | Node.js, Go, Terraform, pnpm, .NET SDK | `symlinks/home/bin/sys-update.sh` (`ASDF_PLUGINS` list — source of truth, always latest) writes to `~/.tool-versions` directly (a real, local, untracked file — a record of what's installed, not hand-edited) |
-| Homebrew / apt (unchanged, permanently) | GUI apps — Homebrew casks (`install-gui-cask.sh`, macOS), Snaps for apps with no official apt path (`install-gui-snap.sh`, Ubuntu), official apt repos/packages/installers (`install-gui-ubuntu.sh`: 1Password, Firefox, Ghostty, GitKraken, Helium, JetBrains Toolbox, ngrok, Postman, VS Code, Zed, Ubuntu), Docker Engine/Desktop — none of Ghostty (no working from-source nixpkgs derivation on either OS), Helium (no nixpkgs derivation exists), JetBrains Toolbox (no nixpkgs derivation exists either), or Zed (nixpkgs' `zeditor` binary's Vulkan/GPU surface creation proved brittle on this machine; the official `zed` installer is upstream-tested) have a working Nix path, so all four stay on native package managers alongside the rest | `install/install-gui-apps.sh` dispatches by OS to `install/install-gui-cask.sh`, `install/install-gui-snap.sh`, `install/install-gui-ubuntu.sh`; `install/install-docker.sh` — Docker has no working non-NixOS Nix path (no systemd/daemon wiring), stays brew cask (macOS) / apt (Ubuntu) by design |
-| Neither — ad-hoc only | Azure Functions Core Tools (nixpkgs closure is missing `Microsoft.AspNetCore.App`, no working build possible) | `install/install-azure-functions.sh` / `install/remove-azure-functions.sh`, run manually, never by `setup.sh` |
-| Neither — ad-hoc only | omp (Oh My Pi) — not in nixpkgs; upstream brew tap/curl installer already auto-update, a Nix derivation would trade that for manual version+sha256 bumps per release | `install/install-omp.sh` / `install/remove-omp.sh`, run manually, never by `setup.sh` |
+| Homebrew / apt (unchanged, permanently) | GUI apps — Homebrew casks (`install-gui-macos.sh`, macOS), Snaps for apps with no official apt path (`install-gui-snap.sh`, Ubuntu), official apt repos/packages/installers (`install-gui-ubuntu.sh`: 1Password, Firefox, Ghostty, GitKraken, Helium, JetBrains Toolbox, ngrok, Postman, VS Code, Zed, Ubuntu), Docker Engine/Desktop — none of Ghostty (no working from-source nixpkgs derivation on either OS), Helium (no nixpkgs derivation exists), JetBrains Toolbox (no nixpkgs derivation exists either), or Zed (nixpkgs' `zeditor` binary's Vulkan/GPU surface creation proved brittle on this machine; the official `zed` installer is upstream-tested) have a working Nix path, so all four stay on native package managers alongside the rest | `install/install-gui-apps.sh` dispatches by OS to `install/install-gui-macos.sh`, `install/install-gui-snap.sh`, `install/install-gui-ubuntu.sh`; `install/install-docker.sh` — Docker has no working non-NixOS Nix path (no systemd/daemon wiring), stays brew cask (macOS) / apt (Ubuntu) by design |
+| `sys-update.sh` (ad-hoc) | omp (Oh My Pi) — not in nixpkgs; upstream brew tap/curl installer already auto-update, a Nix derivation would trade that for manual version+sha256 bumps per release | `symlinks/home/bin/sys-update.sh`'s `update_omp()` installs it if missing and updates it otherwise (macOS: `brew upgrade`; Ubuntu: `omp update`) — runs as part of `setup.sh` and routine maintenance; uninstall ad-hoc with `brew uninstall can1357/tap/omp` (macOS) or `rm ~/.local/bin/omp` (Ubuntu) |
 
 ```bash
 # Apply changes after editing nix/home/packages.nix, nix/home/zsh.nix, or

@@ -207,7 +207,7 @@ blocks fallback to the global one.
 New scripts under `symlinks/home/bin/` source `functions.sh` (co-located) as `${SCRIPT_DIR}/functions.sh`; scripts living elsewhere (`install/`, `nix/`) source it as `${SCRIPT_DIR}/../symlinks/home/bin/functions.sh` for consistent output and error handling.
 
 **GUI app installers (`install/install-gui-*.sh`)** — one script per package
-manager: `install-gui-cask.sh` (Homebrew casks, macOS), `install-gui-snap.sh`
+manager: `install-gui-macos.sh` (Homebrew casks, macOS), `install-gui-snap.sh`
 (Snap, Ubuntu — apps with no official apt path), `install-gui-ubuntu.sh`
 (official apt repos/packages/tarballs/installers, Ubuntu). `install-gui-apps.sh`
 is a thin OS-dispatch wrapper over those three (cask on macOS; snap + the
@@ -256,7 +256,6 @@ not `packages.nix`; Node/Go/Terraform/pnpm/.NET SDK are asdf-managed on both OSe
 app installers note above.
 
 ```
-remove-gui-cask.sh   remove-gui-snap.sh          remove-gui-ubuntu.sh
-remove-azure-functions.sh   remove-docker.sh     remove-omp.sh
-remove-python.sh
+remove-gui-macos.sh   remove-gui-snap.sh          remove-gui-ubuntu.sh
+remove-docker.sh
 ```
