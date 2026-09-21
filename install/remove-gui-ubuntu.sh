@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
-# Removes apps installed by install-gui-apt.sh: purges each package plus its
-# apt repo/keyring/pin files (or, for Zed, its ~/.local install — see below).
-# Ubuntu-only (install-gui-apt.sh is a no-op on macOS, where these stay
+# Removes apps installed by install-gui-ubuntu.sh: purges each package plus
+# its apt repo/keyring/pin files (or, for Zed/JetBrains Toolbox, their
+# ~/.local tarball installs — see below).
+# Ubuntu-only (install-gui-ubuntu.sh is a no-op on macOS, where these stay
 # Homebrew casks managed by remove-gui-cask.sh).
 set -euo pipefail
 
@@ -25,7 +26,7 @@ remove_apt_repo() {
 
 main() {
     if [[ "$OS" != "debian" ]]; then
-        warn "remove-gui-apt.sh is Ubuntu-only — these apps are Homebrew casks on macOS, use remove-gui-cask.sh."
+        warn "remove-gui-ubuntu.sh is Ubuntu-only — these apps are Homebrew casks on macOS, use remove-gui-cask.sh."
         exit 0
     fi
 
@@ -58,20 +59,42 @@ main() {
         /etc/apt/sources.list.d/helium.list \
         /usr/share/keyrings/helium.gpg
 
+    # JetBrains Toolbox — no apt/dpkg package to remove; installed as a
+    # checksummed tarball under ~/Applications (see install-gui-ubuntu.sh's
+    # install_jetbrains_toolbox comment). Leaves ~/.local/share/JetBrains
+    # (Toolbox's own app data plus any IDEs it manages) untouched — same
+    # convention as remove-python.sh not wiping venvs; that data was created
+    # by the app at runtime, not by this install script.
+    if [[ -x "$HOME/Applications/jetbrains-toolbox/bin/jetbrains-toolbox" ]]; then
+        rm -rf "$HOME/Applications/jetbrains-toolbox"
+        rm -f "$HOME/.local/bin/jetbrains-toolbox"
+        rm -f "$HOME/.local/share/applications/jetbrains-toolbox.desktop"
+        success "Removed: jetbrains-toolbox"
+    else
+        warn "Not installed: jetbrains-toolbox"
+    fi
+
     remove_apt_repo ngrok \
         /etc/apt/sources.list.d/ngrok.list \
         /usr/share/keyrings/ngrok-archive-keyring.gpg
 
-    remove_apt_repo sublime-text \
-        /etc/apt/sources.list.d/sublime-text.list \
-        /usr/share/keyrings/sublimehq-archive-keyring.gpg
+    # Postman — no apt/dpkg package to remove; installed as a tarball under
+    # ~/Applications (see install-gui-ubuntu.sh's install_postman comment).
+    if [[ -x "$HOME/Applications/Postman/Postman" ]]; then
+        rm -rf "$HOME/Applications/Postman"
+        rm -f "$HOME/.local/bin/postman"
+        rm -f "$HOME/.local/share/applications/postman.desktop"
+        success "Removed: postman"
+    else
+        warn "Not installed: postman"
+    fi
 
     remove_apt_repo code \
         /etc/apt/sources.list.d/vscode.list \
         /usr/share/keyrings/microsoft-archive-keyring.gpg
 
     # Zed — no apt/dpkg package to remove; zed.dev's installer just unpacks a
-    # tarball to ~/.local (see install-gui-apt.sh's install_zed comment).
+    # tarball to ~/.local (see install-gui-ubuntu.sh's install_zed comment).
     if command -v zed &>/dev/null; then
         rm -f "$HOME/.local/bin/zed"
         rm -rf "$HOME/.local/zed.app"

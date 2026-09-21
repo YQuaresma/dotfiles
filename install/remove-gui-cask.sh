@@ -11,7 +11,7 @@ source "${SCRIPT_DIR}/../symlinks/home/bin/functions.sh"
 OS="$(detect_os)"
 
 if [[ "$OS" != "macos" ]]; then
-    warn "remove-gui-cask.sh is macOS-only — see remove-gui-snap.sh (Snap) and remove-gui-apt.sh (apt) on Ubuntu."
+    warn "remove-gui-cask.sh is macOS-only — see remove-gui-ubuntu.sh on Ubuntu."
     exit 0
 fi
 
@@ -19,7 +19,6 @@ GUI_CASKS=(
     "1password"
     "balenaetcher"
     "claude"
-    "drawio"
     "firefox"
     "ghostty"
     "gitkraken"
@@ -33,7 +32,6 @@ GUI_CASKS=(
     "postman"
     "rectangle"
     "sourcetree"
-    "sublime-text"
     "visual-studio-code"
     "whatsapp"
     "zed"

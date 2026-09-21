@@ -60,10 +60,13 @@ add_docker_apt_repo() {
 
     # Download as the unprivileged user and verify before it becomes a trust
     # anchor — never `sudo curl`, which would parse attacker-reachable TLS and
-    # HTTP input as root.
+    # HTTP input as root. Explicit cleanup on both exit paths below, not
+    # `trap ... RETURN`: that trap isn't scoped to this call — it fires on
+    # every function return afterward (including the caller's), crashing on
+    # the next invocation with "key: unbound variable" once $key is out of
+    # scope.
     local key
     key="$(mktemp)"
-    trap 'rm -f "$key"' RETURN
     curl -fsSL https://download.docker.com/linux/ubuntu/gpg -o "$key"
 
     if ! gpg --show-keys --with-colons "$key" \
@@ -72,10 +75,12 @@ add_docker_apt_repo() {
         error "Docker GPG key fingerprint mismatch — refusing to trust it."
         error "Expected ${DOCKER_GPG_FPR}. Got:"
         gpg --show-keys --with-colons "$key" | awk -F: '/^fpr:/ { print "  " $10 }'
+        rm -f "$key"
         return 1
     fi
 
     sudo install -m 0644 "$key" /etc/apt/keyrings/docker.asc
+    rm -f "$key"
     sudo tee /etc/apt/sources.list.d/docker.sources > /dev/null <<EOF
 Types: deb
 URIs: https://download.docker.com/linux/ubuntu
@@ -104,9 +109,10 @@ install_desktop_debian() {
     # `mktemp -d` + a fixed name inside it, rather than `mktemp -t foo.XXXXXX.deb`:
     # apt needs the .deb extension, but GNU mktemp's `-t` is deprecated and its
     # handling of a suffix after the Xs varies by coreutils version, while the
-    # directory form behaves identically on GNU and BSD.
+    # directory form behaves identically on GNU and BSD. Cleaned up explicitly
+    # on every exit path below, not via `trap ... RETURN` (see
+    # add_docker_apt_repo's comment for why that leaks across calls).
     tmpdir="$(mktemp -d)"
-    trap 'rm -rf "$tmpdir"' RETURN
     deb="${tmpdir}/docker-desktop-${arch}.deb"
     curl --proto '=https' --proto-redir '=https' --tlsv1.2 -fsSL -o "$deb" \
         "https://desktop.docker.com/linux/main/${arch}/docker-desktop-${arch}.deb"
@@ -122,6 +128,7 @@ install_desktop_debian() {
             error "Docker Desktop checksum mismatch — refusing to install."
             error "Expected ${DOCKER_DESKTOP_SHA256}"
             error "Actual   ${actual}"
+            rm -rf "$tmpdir"
             return 1
         fi
         success "Docker Desktop checksum verified."
@@ -133,6 +140,7 @@ install_desktop_debian() {
     sudo apt-get install -y "$deb"
     systemctl --user enable docker-desktop 2>/dev/null || true
     success "Docker Desktop installed."
+    rm -rf "$tmpdir"
 }
 
 install_debian() {

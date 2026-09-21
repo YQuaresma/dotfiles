@@ -249,27 +249,25 @@ if you only want one package manager:
 
 | Name | macOS | Ubuntu |
 |---|---|---|
-| 1Password | Homebrew cask [`install-gui-cask.sh`] | apt repo [`install-gui-apt.sh`] |
+| 1Password | Homebrew cask [`install-gui-cask.sh`] | apt repo [`install-gui-ubuntu.sh`] |
 | balenaEtcher | Homebrew cask [`install-gui-cask.sh`] | — |
 | Claude | Homebrew cask [`install-gui-cask.sh`] | — |
-| draw.io | Homebrew cask [`install-gui-cask.sh`] | Snap [`install-gui-snap.sh`] |
-| Firefox | Homebrew cask [`install-gui-cask.sh`] | apt repo [`install-gui-apt.sh`] |
-| Ghostty | Homebrew cask [`install-gui-cask.sh`] | apt package, no repo [`install-gui-apt.sh`] |
-| GitKraken | Homebrew cask [`install-gui-cask.sh`] | downloaded `.deb` [`install-gui-apt.sh`] |
+| Firefox | Homebrew cask [`install-gui-cask.sh`] | apt repo [`install-gui-ubuntu.sh`] |
+| Ghostty | Homebrew cask [`install-gui-cask.sh`] | apt package, no repo [`install-gui-ubuntu.sh`] |
+| GitKraken | Homebrew cask [`install-gui-cask.sh`] | downloaded `.deb` [`install-gui-ubuntu.sh`] |
 | Google Chrome | Homebrew cask [`install-gui-cask.sh`] | — |
-| Helium Browser | Homebrew cask [`install-gui-cask.sh`] | apt repo [`install-gui-apt.sh`] |
-| JetBrains Toolbox | Homebrew cask [`install-gui-cask.sh`] | Snap `--beta` [`install-gui-snap.sh`] |
+| Helium Browser | Homebrew cask [`install-gui-cask.sh`] | apt repo [`install-gui-ubuntu.sh`] |
+| JetBrains Toolbox | Homebrew cask [`install-gui-cask.sh`] | checksummed tarball, no apt/dpkg [`install-gui-ubuntu.sh`] |
 | MeetingBar | Homebrew cask [`install-gui-cask.sh`] | — |
 | Meld | Homebrew cask [`install-gui-cask.sh`] | — |
-| ngrok | Homebrew cask [`install-gui-cask.sh`] | apt repo [`install-gui-apt.sh`] |
+| ngrok | Homebrew cask [`install-gui-cask.sh`] | apt repo [`install-gui-ubuntu.sh`] |
 | Notion | Homebrew cask [`install-gui-cask.sh`] | Snap `notion-desktop` [`install-gui-snap.sh`] |
-| Postman | Homebrew cask [`install-gui-cask.sh`] | Snap [`install-gui-snap.sh`] |
+| Postman | Homebrew cask [`install-gui-cask.sh`] | official tarball, no apt/dpkg [`install-gui-ubuntu.sh`] |
 | Rectangle | Homebrew cask [`install-gui-cask.sh`] | — |
 | Sourcetree | Homebrew cask [`install-gui-cask.sh`] | — |
-| Sublime Text | Homebrew cask [`install-gui-cask.sh`] | apt repo [`install-gui-apt.sh`] |
-| VS Code | Homebrew cask [`install-gui-cask.sh`] | apt repo [`install-gui-apt.sh`] |
+| VS Code | Homebrew cask [`install-gui-cask.sh`] | apt repo [`install-gui-ubuntu.sh`] |
 | WhatsApp | Homebrew cask [`install-gui-cask.sh`] | — |
-| Zed | Homebrew cask [`install-gui-cask.sh`] | curl installer, no apt/dpkg [`install-gui-apt.sh`] |
+| Zed | Homebrew cask [`install-gui-cask.sh`] | curl installer, no apt/dpkg [`install-gui-ubuntu.sh`] |
 
 ## Applying Dotfiles Only
 
@@ -378,10 +376,10 @@ Each remaining `install-*.sh` in `install/` has a matching `remove-*.sh` that re
 
 | Script | Reverses | Description |
 |--------|----------|-------------|
-| `remove-gui-apps.sh` | `install-gui-apps.sh` | OS-dispatch wrapper — removes GUI apps by calling `remove-gui-cask.sh` (macOS) or `remove-gui-snap.sh` + `remove-gui-apt.sh` (Ubuntu) |
+| `remove-gui-apps.sh` | `install-gui-apps.sh` | OS-dispatch wrapper — removes GUI apps by calling `remove-gui-cask.sh` (macOS) or `remove-gui-snap.sh` + `remove-gui-ubuntu.sh` (Ubuntu) |
 | `remove-gui-cask.sh` | `install-gui-cask.sh` | Removes GUI apps installed via Homebrew casks (macOS only) |
 | `remove-gui-snap.sh` | `install-gui-snap.sh` | Removes GUI apps installed via Snap, no official apt path (Ubuntu only) |
-| `remove-gui-apt.sh` | `install-gui-apt.sh` | Removes GUI apps installed via official apt repos, plain apt packages, or (Zed) an official installer (Ubuntu only) — **ad-hoc only, not run by `setup.sh`** |
+| `remove-gui-ubuntu.sh` | `install-gui-ubuntu.sh` | Removes GUI apps installed via official apt repos, plain apt packages, or (Zed, JetBrains Toolbox) an official installer (Ubuntu only) — **ad-hoc only, not run by `setup.sh`** |
 | `remove-omp.sh` | `install-omp.sh` | Removes omp (Oh My Pi) — **ad-hoc only, not run by `setup.sh`** |
 | `remove-azure-functions.sh` | `install-azure-functions.sh` | Removes Azure Functions Core Tools — **ad-hoc only, not run by `setup.sh`** |
 | `remove-docker.sh` | `install-docker.sh` | Removes Docker Engine and Docker Desktop |
@@ -405,7 +403,7 @@ rows in [Nix + asdf](#nix--asdf-macos--ubuntu) for why each still needs its
 own package manager): `install-ghostty.sh`, `remove-ghostty.sh`,
 `install-helium.sh`, `remove-helium.sh`, `install-zed.sh`, `remove-zed.sh` —
 each was a standalone macOS-cask/Ubuntu-install script; folded into
-`install-gui-cask.sh`/`install-gui-apt.sh` (and their `remove-*` counterparts)
+`install-gui-cask.sh`/`install-gui-ubuntu.sh` (and their `remove-*` counterparts)
 once those existed, so every GUI app installs from the same three scripts
 regardless of package manager.
 
@@ -507,7 +505,7 @@ Both **macOS** and **Ubuntu** are fully migrated off Homebrew/apt for CLI/dev to
 |-------|------|--------|
 | Nix (home-manager, + nix-darwin on macOS) | CLI utils (`bat`, `eza`, `fzf`, `jq`, `zoxide`, …), `azure-cli`, `awscli2`, `google-cloud-sdk`, `azurite`, `claude-code`, Nerd Fonts, oh-my-zsh + Powerlevel10K + plugins, `asdf` itself | `nix/flake.nix`, `nix/home/packages.nix`, `nix/home/zsh.nix`, `nix/darwin/configuration.nix` (macOS fonts), `nix/home/fonts-linux.nix` (Ubuntu fonts) |
 | asdf | Node.js, Go, Terraform, pnpm, .NET SDK | `symlinks/home/bin/sys-update.sh` (`ASDF_PLUGINS` list — source of truth, always latest) writes to `~/.tool-versions` directly (a real, local, untracked file — a record of what's installed, not hand-edited) |
-| Homebrew / apt (unchanged, permanently) | GUI apps — Homebrew casks (`install-gui-cask.sh`, macOS), Snaps for apps with no official apt path (`install-gui-snap.sh`, Ubuntu), official apt repos/packages/installers (`install-gui-apt.sh`: 1Password, Firefox, Ghostty, GitKraken, Helium, ngrok, Sublime Text, VS Code, Zed, Ubuntu), Docker Engine/Desktop — none of Ghostty (no working from-source nixpkgs derivation on either OS), Helium (no nixpkgs derivation exists), or Zed (nixpkgs' `zeditor` binary's Vulkan/GPU surface creation proved brittle on this machine; the official `zed` installer is upstream-tested) have a working Nix path, so all three stay on native package managers alongside the rest | `install/install-gui-apps.sh` dispatches by OS to `install/install-gui-cask.sh`, `install/install-gui-snap.sh`, `install/install-gui-apt.sh`; `install/install-docker.sh` — Docker has no working non-NixOS Nix path (no systemd/daemon wiring), stays brew cask (macOS) / apt (Ubuntu) by design |
+| Homebrew / apt (unchanged, permanently) | GUI apps — Homebrew casks (`install-gui-cask.sh`, macOS), Snaps for apps with no official apt path (`install-gui-snap.sh`, Ubuntu), official apt repos/packages/installers (`install-gui-ubuntu.sh`: 1Password, Firefox, Ghostty, GitKraken, Helium, JetBrains Toolbox, ngrok, Postman, VS Code, Zed, Ubuntu), Docker Engine/Desktop — none of Ghostty (no working from-source nixpkgs derivation on either OS), Helium (no nixpkgs derivation exists), JetBrains Toolbox (no nixpkgs derivation exists either), or Zed (nixpkgs' `zeditor` binary's Vulkan/GPU surface creation proved brittle on this machine; the official `zed` installer is upstream-tested) have a working Nix path, so all four stay on native package managers alongside the rest | `install/install-gui-apps.sh` dispatches by OS to `install/install-gui-cask.sh`, `install/install-gui-snap.sh`, `install/install-gui-ubuntu.sh`; `install/install-docker.sh` — Docker has no working non-NixOS Nix path (no systemd/daemon wiring), stays brew cask (macOS) / apt (Ubuntu) by design |
 | Neither — ad-hoc only | Azure Functions Core Tools (nixpkgs closure is missing `Microsoft.AspNetCore.App`, no working build possible) | `install/install-azure-functions.sh` / `install/remove-azure-functions.sh`, run manually, never by `setup.sh` |
 | Neither — ad-hoc only | omp (Oh My Pi) — not in nixpkgs; upstream brew tap/curl installer already auto-update, a Nix derivation would trade that for manual version+sha256 bumps per release | `install/install-omp.sh` / `install/remove-omp.sh`, run manually, never by `setup.sh` |
 

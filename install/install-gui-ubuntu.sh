@@ -1,13 +1,18 @@
 #!/usr/bin/env bash
 # Installs GUI apps via their official Ubuntu install method — an apt repo,
-# a plain apt package, a downloaded .deb, or (Zed) an official curl
-# installer with no apt/dpkg involvement at all. macOS already gets these
-# via Homebrew casks in install-gui-cask.sh — this script is Ubuntu-only.
+# a plain apt package, a downloaded .deb, JetBrains' official checksummed
+# tarball, Postman's official (unchecksummed) tarball, or (Zed) an official
+# curl installer with no apt/dpkg involvement at all. macOS already gets
+# these via Homebrew casks in install-gui-cask.sh — this script is
+# Ubuntu-only.
 #
 # Most apps below have an official, vendor-published apt repo that GUI_SNAPS
 # previously covered via Snap. See install-gui-snap.sh for the apps that
-# stayed on Snap because no official APT path exists (draw.io, JetBrains
-# Toolbox, Notion, Postman).
+# stayed on Snap because no official install path exists at all (Notion —
+# no official Linux app whatsoever, not even a tarball).
+# JetBrains Toolbox has neither an apt path nor a working Snap (the only
+# Snap under that name was an unofficial, non-functional repackaging — see
+# install_jetbrains_toolbox below), so it uses JetBrains' own releases API.
 #
 # GPG fingerprints are pinned per app, same convention as install-helium's
 # old fingerprint (see install_helium below): an APT trust anchor is
@@ -32,9 +37,12 @@ add_apt_repo() {
     sudo apt-get install -y ca-certificates curl gnupg
     sudo install -m 0755 -d "$(dirname "$keyring_path")"
 
+    # Explicit cleanup on both exit paths below, not `trap ... RETURN`: that
+    # trap isn't scoped to this call — it fires on every function return
+    # afterward (including the caller's), crashing on the next invocation
+    # with "key: unbound variable" once $key is out of scope.
     local key
     key="$(mktemp)"
-    trap 'rm -f "$key"' RETURN
     curl -fsSL "$key_url" -o "$key"
 
     if ! gpg --show-keys --with-colons "$key" \
@@ -43,11 +51,13 @@ add_apt_repo() {
         error "GPG key fingerprint mismatch for ${list_file} — refusing to trust it."
         error "Expected ${expected_fpr}. Got:"
         gpg --show-keys --with-colons "$key" | awk -F: '/^fpr:/ { print "  " $10 }'
+        rm -f "$key"
         return 1
     fi
 
     sudo gpg --dearmor -o "$keyring_path" < "$key"
     echo "$repo_line" | sudo tee "$list_file" > /dev/null
+    rm -f "$key"
 }
 
 # ------------------------------------------
@@ -75,6 +85,19 @@ install_1password() {
 # the pin below forces APT to prefer Mozilla's real .deb once the repo exists.
 # ------------------------------------------
 install_firefox() {
+    # A plain `command -v firefox` guard (like every sibling function below)
+    # would be WRONG here: Ubuntu's transitional stub also provides
+    # /usr/bin/firefox, so it would look "already installed" and this would
+    # never converge to Mozilla's real build. Distinguish by dpkg version
+    # instead — the stub fakes a `1:` epoch (see the --allow-downgrades
+    # comment below); Mozilla's real packages never have one.
+    local installed_version
+    installed_version="$(dpkg-query -W -f='${Version}' firefox 2>/dev/null || true)"
+    if [[ -n "$installed_version" && "$installed_version" != 1:* ]]; then
+        warn "Already installed: firefox ($installed_version)"
+        return 0
+    fi
+
     add_apt_repo /etc/apt/sources.list.d/mozilla.list \
         https://packages.mozilla.org/apt/repo-signing-key.gpg \
         35BAA0B33E9EB396F59CA838C0BA5CE6DC6315A3 \
@@ -87,7 +110,13 @@ install_firefox() {
     fi
 
     sudo apt-get update
-    sudo apt-get install -y firefox && success "Installed: firefox" || error "Failed to install: firefox — continuing..."
+    # Ubuntu's transitional "firefox" stub (which just installs the Snap) uses
+    # a fake `1:` epoch specifically to always out-rank real competing repos in
+    # version comparisons. Pin-Priority above only controls candidate
+    # selection for a fresh install, not apt's downgrade-protection check
+    # against an already-installed higher-epoch package — --allow-downgrades
+    # is required to actually replace it with Mozilla's real build.
+    sudo apt-get install -y --allow-downgrades firefox && success "Installed: firefox" || error "Failed to install: firefox — continuing..."
 }
 
 # ------------------------------------------
@@ -123,10 +152,10 @@ install_gitkraken() {
     fi
     local deb
     deb="$(mktemp --suffix=.deb)"
-    trap 'rm -f "$deb"' RETURN
     curl --proto '=https' --proto-redir '=https' --tlsv1.2 -fsSL \
         https://release.gitkraken.com/linux/gitkraken-amd64.deb -o "$deb"
     sudo apt-get install -y "$deb" && success "Installed: gitkraken" || error "Failed to install: gitkraken — continuing..."
+    rm -f "$deb"
 }
 
 # ------------------------------------------
@@ -148,6 +177,70 @@ install_helium() {
 }
 
 # ------------------------------------------
+# JetBrains Toolbox — NO apt/dpkg or Snap path exists (the only Snap under
+# this name was an unofficial, non-functional third-party repackaging by
+# "jnsougata" — do not reintroduce it). JetBrains' own releases API resolves
+# the current stable Linux tarball AND its sha256 checksum, verified below
+# before extraction — a real integrity check, unlike install_zed/
+# install-omp.sh's curl installers, which only get HTTPS-transport trust.
+# https://www.jetbrains.com/help/toolbox-app/installation.html
+#
+# No silent-install flag exists on Linux (JetBrains' own docs: "For Linux
+# and macOS, a silent installation is not possible") — this replicates the
+# manual tar.gz + first-launch flow: extract, symlink onto PATH, install the
+# bundled .desktop file. Toolbox still self-configures its autostart entry,
+# proper icon, and jetbrains:// URI handler on first real launch — this
+# script only gets it onto the app menu and PATH, matching Zed's install_zed
+# bar (gets the binary running, doesn't fully replicate every first-run step).
+# ------------------------------------------
+JETBRAINS_TOOLBOX_DIR="$HOME/Applications/jetbrains-toolbox"
+
+install_jetbrains_toolbox() {
+    if [[ -x "$JETBRAINS_TOOLBOX_DIR/bin/jetbrains-toolbox" ]]; then
+        warn "Already installed: jetbrains-toolbox"
+        return 0
+    fi
+
+    local release_json download_url checksum_url tmpdir tarball checksum_file expected_sha actual_sha
+    release_json="$(curl -fsSL 'https://data.services.jetbrains.com/products/releases?code=TBA&latest=true&type=release')"
+    download_url="$(printf '%s' "$release_json" | jq -r '.TBA[0].downloads.linux.link')"
+    checksum_url="$(printf '%s' "$release_json" | jq -r '.TBA[0].downloads.linux.checksumLink')"
+
+    if [[ -z "$download_url" || "$download_url" == "null" ]]; then
+        error "Could not resolve JetBrains Toolbox download URL — continuing."
+        return 1
+    fi
+
+    tmpdir="$(mktemp -d)"
+    tarball="$tmpdir/toolbox.tar.gz"
+    checksum_file="$tmpdir/toolbox.tar.gz.sha256"
+    curl --proto '=https' --proto-redir '=https' --tlsv1.2 -fsSL -o "$tarball" "$download_url"
+    curl --proto '=https' --proto-redir '=https' --tlsv1.2 -fsSL -o "$checksum_file" "$checksum_url"
+
+    expected_sha="$(awk '{print $1}' "$checksum_file")"
+    actual_sha="$(sha256sum "$tarball" | awk '{print $1}')"
+    if [[ "$actual_sha" != "$expected_sha" ]]; then
+        error "JetBrains Toolbox checksum mismatch — refusing to install."
+        error "Expected ${expected_sha}"
+        error "Actual   ${actual_sha}"
+        rm -rf "$tmpdir"
+        return 1
+    fi
+
+    mkdir -p "$JETBRAINS_TOOLBOX_DIR" "$HOME/.local/bin" "$HOME/.local/share/applications"
+    tar -xzf "$tarball" -C "$JETBRAINS_TOOLBOX_DIR" --strip-components=1
+    rm -rf "$tmpdir"
+
+    ln -sf "$JETBRAINS_TOOLBOX_DIR/bin/jetbrains-toolbox" "$HOME/.local/bin/jetbrains-toolbox"
+    sed "s|^Exec=jetbrains-toolbox|Exec=$JETBRAINS_TOOLBOX_DIR/bin/jetbrains-toolbox|" \
+        "$JETBRAINS_TOOLBOX_DIR/bin/jetbrains-toolbox.desktop" \
+        > "$HOME/.local/share/applications/jetbrains-toolbox.desktop"
+
+    success "Installed: jetbrains-toolbox ($JETBRAINS_TOOLBOX_DIR)"
+    warn "Launch it once from your app menu — Toolbox sets up its own autostart entry, icon, and jetbrains:// URI handler on first run."
+}
+
+# ------------------------------------------
 # ngrok — official repo
 # https://ngrok.com/download/linux
 # ------------------------------------------
@@ -166,21 +259,49 @@ install_ngrok() {
 }
 
 # ------------------------------------------
-# Sublime Text — official repo
-# https://www.sublimetext.com/docs/linux_repositories.html
+# Postman — official download, no apt/dpkg/Snap involvement. Postman's own
+# docs recommend Snap ("bundles all needed libraries") and don't publish a
+# checksum for this tarball, so this is HTTPS-transport-only trust — same
+# tier as install_zed/install-omp.sh's curl installers, weaker than
+# install_jetbrains_toolbox's checksummed download.
+# https://learning.postman.com/docs/getting-started/installation/install-app
 # ------------------------------------------
-install_sublime_text() {
-    if command -v subl &>/dev/null; then
-        warn "Already installed: sublime-text"
+# The tarball's top-level dir is literally "Postman" (capital, no version
+# suffix) — POSTMAN_DIR matches that casing exactly rather than renaming, so
+# a plain `tar -xzf -C "$HOME/Applications"` (no --strip-components needed)
+# lands exactly where this points.
+POSTMAN_DIR="$HOME/Applications/Postman"
+
+install_postman() {
+    if [[ -x "$POSTMAN_DIR/Postman" ]]; then
+        warn "Already installed: postman"
         return 0
     fi
-    add_apt_repo /etc/apt/sources.list.d/sublime-text.list \
-        https://download.sublimetext.com/sublimehq-pub.gpg \
-        1EDDE2CDFC025D17F6DA9EC0ADAE6AD28A8F901A \
-        /usr/share/keyrings/sublimehq-archive-keyring.gpg \
-        "deb [signed-by=/usr/share/keyrings/sublimehq-archive-keyring.gpg] https://download.sublimetext.com/ apt/stable/"
-    sudo apt-get update
-    sudo apt-get install -y sublime-text && success "Installed: sublime-text" || error "Failed to install: sublime-text — continuing..."
+
+    local tarball tmpdir
+    tmpdir="$(mktemp -d)"
+    tarball="$tmpdir/postman.tar.gz"
+    curl --proto '=https' --proto-redir '=https' --tlsv1.2 -fsSL \
+        -o "$tarball" "https://dl.pstmn.io/download/latest/linux64"
+
+    mkdir -p "$HOME/Applications" "$HOME/.local/bin" "$HOME/.local/share/applications"
+    rm -rf "$POSTMAN_DIR"
+    tar -xzf "$tarball" -C "$HOME/Applications"
+    rm -rf "$tmpdir"
+
+    ln -sf "$POSTMAN_DIR/Postman" "$HOME/.local/bin/postman"
+    cat > "$HOME/.local/share/applications/postman.desktop" <<EOF
+[Desktop Entry]
+Type=Application
+Name=Postman
+Exec=$POSTMAN_DIR/Postman %U
+Icon=$POSTMAN_DIR/app/resources/app/assets/icon.png
+Categories=Development;
+Terminal=false
+StartupWMClass=Postman
+EOF
+
+    success "Installed: postman ($POSTMAN_DIR)"
 }
 
 # ------------------------------------------
@@ -219,10 +340,10 @@ install_zed() {
     fi
     local zed_installer
     zed_installer="$(mktemp)"
-    trap 'rm -f "$zed_installer"' RETURN
     curl --proto '=https' --proto-redir '=https' --tlsv1.2 -fsSL \
         https://zed.dev/install.sh -o "$zed_installer"
     sh "$zed_installer" && success "Installed: zed" || error "Failed to install: zed — continuing..."
+    rm -f "$zed_installer"
 }
 
 # --------------------------------------------------
@@ -230,7 +351,7 @@ install_zed() {
 # --------------------------------------------------
 main() {
     if [[ "$OS" != "debian" ]]; then
-        warn "install-gui-apt.sh is Ubuntu-only — these apps are already Homebrew casks via install-gui-cask.sh on macOS."
+        warn "install-gui-ubuntu.sh is Ubuntu-only — these apps are already Homebrew casks via install-gui-cask.sh on macOS."
         exit 0
     fi
 
@@ -243,10 +364,10 @@ main() {
     install_ghostty
     install_gitkraken
     install_helium
+    install_jetbrains_toolbox
     install_ngrok
-    install_sublime_text
+    install_postman
     install_vscode
-    install_zed
 
     success "GUI apt app installation complete."
 }

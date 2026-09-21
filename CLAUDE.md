@@ -208,10 +208,11 @@ New scripts under `symlinks/home/bin/` source `functions.sh` (co-located) as `${
 
 **GUI app installers (`install/install-gui-*.sh`)** — one script per package
 manager: `install-gui-cask.sh` (Homebrew casks, macOS), `install-gui-snap.sh`
-(Snap, Ubuntu — apps with no official apt path), `install-gui-apt.sh` (official
-apt repos, Ubuntu). `install-gui-apps.sh` is a thin OS-dispatch wrapper over
-those three (cask on macOS; snap + apt on Ubuntu, since those two are
-complementary, not overlapping). Each has a matching `remove-gui-*.sh`. The
+(Snap, Ubuntu — apps with no official apt path), `install-gui-ubuntu.sh`
+(official apt repos/packages/tarballs/installers, Ubuntu). `install-gui-apps.sh`
+is a thin OS-dispatch wrapper over those three (cask on macOS; snap + the
+Ubuntu installer script on Ubuntu, since those two are complementary, not
+overlapping). Each has a matching `remove-gui-*.sh`. The
 package list (`GUI_CASKS`/`GUI_SNAPS`) is duplicated between an install/remove
 pair, not shared via a sourced file — **keep both copies in sync by hand.** A
 prior shared-list design existed specifically to prevent that drift (the
@@ -255,7 +256,7 @@ not `packages.nix`; Node/Go/Terraform/pnpm/.NET SDK are asdf-managed on both OSe
 app installers note above.
 
 ```
-remove-gui-cask.sh   remove-gui-snap.sh          remove-gui-apt.sh
+remove-gui-cask.sh   remove-gui-snap.sh          remove-gui-ubuntu.sh
 remove-azure-functions.sh   remove-docker.sh     remove-omp.sh
 remove-python.sh
 ```

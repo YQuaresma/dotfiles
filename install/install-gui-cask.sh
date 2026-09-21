@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
-# Installs GUI apps via Homebrew casks. macOS only — split out of
-# install-gui-snap.sh so each package manager has its own script.
+# Installs GUI apps via Homebrew casks. macOS only — Ubuntu gets these via
+# install-gui-ubuntu.sh (apt repos/packages/tarballs/installers).
 #
 # GUI_CASKS must stay in sync with remove-gui-cask.sh's copy — an "undo"
 # script that removes things it never installed, or leaves behind things it
@@ -12,7 +12,7 @@ source "${SCRIPT_DIR}/../symlinks/home/bin/functions.sh"
 OS="$(detect_os)"
 
 if [[ "$OS" != "macos" ]]; then
-    warn "install-gui-cask.sh is macOS-only — see install-gui-snap.sh (Snap) and install-gui-apt.sh (apt) on Ubuntu."
+    warn "install-gui-cask.sh is macOS-only — see install-gui-ubuntu.sh on Ubuntu."
     exit 0
 fi
 
@@ -20,7 +20,6 @@ GUI_CASKS=(
     "1password"
     "balenaetcher"
     "claude"
-    "drawio"
     "firefox"
     "ghostty"
     "gitkraken"
@@ -34,7 +33,6 @@ GUI_CASKS=(
     "postman"
     "rectangle"
     "sourcetree"
-    "sublime-text"
     "visual-studio-code"
     "whatsapp"
     "zed"
