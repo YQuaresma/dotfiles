@@ -7,32 +7,105 @@
 // custom settings, run `zed: open default settings` from the
 // command palette (cmd-shift-p / ctrl-shift-p)
 {
-  "buffer_font_family": "Inconsolata Nerd Font",
-  "ui_font_family": ".ZedSans",
-  "autosave": {
-    "after_delay": {
-      "milliseconds": 1000
-    }
+  "cli_default_open_behavior": "existing_window",
+  "collaboration_panel": {
+    "button": false,
+  },
+  "agent": {
+    "button": false,
+    "favorite_models": [],
+    "model_parameters": [],
+  },
+  "git_panel": {
+    "show_count_badge": true,
+    "file_icons": true,
+    "tree_view": true,
+    "starts_open": true,
   },
   "project_panel": {
-    "hide_hidden": false,
-    "hide_root": false,
+    "git_status_indicator": true,
     "bold_folder_labels": true,
     "dock": "left",
+    "hide_hidden": false,
+    "hide_root": false,
     "auto_reveal_entries": true,
-    "auto_fold_dirs": false
+    "auto_fold_dirs": false,
   },
-  "icon_theme": {
-    "mode": "light",
-    "light": "VSCode Icons for Zed (Dark Official Icons)",
-    "dark": "Zed (Default)"
+  "icon_theme": "VSCode Icons for Zed (Dark Official Icons)",
+  "theme": "JetBrains Dark",
+
+  // Boost saturation of the active theme's editor + syntax colors for a more
+  // vibrant look, without switching away from JetBrains Dark.
+  "experimental.theme_overrides": {
+    "text.accent": "#4fd6ff",
+    "border.focused": "#4fd6ff",
+    "editor.background": "#191a1c",
+    "editor.gutter.background": "#191a1c",
+    "syntax": {
+      "keyword": { "color": "#ff5fa2", "font_weight": 700 },
+      "operator": { "color": "#ff5fa2" },
+      "function": { "color": "#4fc3ff" },
+      "type": { "color": "#26e0c0" },
+      "type.builtin": { "color": "#26e0c0" },
+      "constructor": { "color": "#4fc3ff" },
+      "string": { "color": "#5ef08a" },
+      "string.escape": { "color": "#ffd94a" },
+      "number": { "color": "#c58bff" },
+      "boolean": { "color": "#ff9d3d", "font_weight": 700 },
+      "constant": { "color": "#ff9d3d" },
+      "property": { "color": "#8fd6ff" },
+      "variable": { "color": "#e6e6e6" },
+      "variable.special": { "color": "#ff9d3d" },
+      "attribute": { "color": "#ffd94a" },
+      "tag": { "color": "#ff5fa2" },
+      "comment": { "color": "#8a8f98", "font_style": "italic" },
+      "comment.doc": { "color": "#a0a6b0", "font_style": "italic" },
+      "punctuation": { "color": "#c9ccd3" },
+      "label": { "color": "#ffd94a" },
+      "emphasis": { "font_style": "italic" },
+      "emphasis.strong": { "font_weight": 700 },
+    },
   },
-  "base_keymap": "Zed",
-  "ui_font_size": 16.0,
-  "buffer_font_size": 16.0,
-  "theme": {
-    "mode": "dark",
-    "light": "One Light",
-    "dark": "One Dark",
+
+  "file_types": {
+    "Shell Script": ["*.alias", ".zshrc.alias", ".zshrc.private"],
+  },
+  "languages": {
+    "JSON": {
+      "format_on_save": "on",
+      "formatter": "prettier",
+      "tab_size": 2,
+    },
+    "JSONC": {
+      "format_on_save": "on",
+      "formatter": "prettier",
+      "tab_size": 2,
+    },
+  },
+
+  "auto_install_extensions": {
+    "html": true,
+    "jetbrains-theme": true,
+    "vscode-icons": true,
+  },
+  "buffer_font_family": "Inconsolata Nerd Font",
+  "buffer_font_size": 15,
+  "ui_font_family": ".ZedSans",
+  "ui_font_size": 16,
+
+  "terminal": {
+    "font_family": "Inconsolata Nerd Font",
+  },
+
+  "telemetry": {
+    "diagnostics": false,
+    "metrics": false,
+    "anthropic_retention": false,
+  },
+
+  "autosave": {
+    "after_delay": {
+      "milliseconds": 1000,
+    },
   },
 }
