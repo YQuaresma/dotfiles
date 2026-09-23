@@ -72,7 +72,7 @@ itself. Does **not** clone — that's manual (step 2).
 **2. Clone** — manual, `gh` is already authenticated by step 1:
 
 ```bash
-gh repo clone YQuaresma/.dotfiles ~/Developer/Repos/dotfiles
+gh repo clone YQuaresma/dotfiles ~/Developer/Repos/dotfiles
 ln -s ~/Developer/Repos/dotfiles ~/.dotfiles
 ```
 

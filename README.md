@@ -35,13 +35,13 @@ Four steps — the two scripts are idempotent, safe to re-run:
 ### 1. Bootstrap & Clone
 
 ```bash
-bash <(curl -fsSL https://raw.githubusercontent.com/YQuaresma/.dotfiles/main/install/initialise.sh)
+bash <(curl -fsSL https://raw.githubusercontent.com/YQuaresma/dotfiles/main/install/initialise.sh)
 ```
 
 Clones into `~/Developer/Repos/dotfiles` and symlinks `~/.dotfiles` to it — every
 other script in this repo only ever references `~/.dotfiles`, none of them need to
 know or care where you actually put the real clone. Want it somewhere else? Clone
-manually first (`gh repo clone YQuaresma/.dotfiles <path>` then
+manually first (`gh repo clone YQuaresma/dotfiles <path>` then
 `ln -s <path> ~/.dotfiles`) before running `initialise.sh` — it leaves an existing
 `~/.dotfiles` symlink alone.
 
@@ -130,8 +130,8 @@ ssh -T git@github.com
 ssh -T git@gh-personal
 ```
 
-You can now clone with either `git@github.com:YQuaresma/.dotfiles.git` or
-`git@gh-personal:YQuaresma/.dotfiles.git` — same key, same result.
+You can now clone with either `git@github.com:YQuaresma/dotfiles.git` or
+`git@gh-personal:YQuaresma/dotfiles.git` — same key, same result.
 
 ### 4. PGP Configuration
 

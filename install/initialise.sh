@@ -159,7 +159,7 @@ clone_dotfiles() {
     else
         echo "Cloning dotfiles repo..."
         mkdir -p "$(dirname "$target")"
-        gh repo clone YQuaresma/.dotfiles "$target"
+        gh repo clone YQuaresma/dotfiles "$target"
     fi
 
     if [[ -L "$HOME/.dotfiles" && "$(readlink "$HOME/.dotfiles")" == "$target" ]]; then
