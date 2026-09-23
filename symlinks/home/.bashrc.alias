@@ -8,6 +8,13 @@ pathl() { echo "$PATH" | tr ':' '\n'; }
 finder-show-all-files() { defaults write com.apple.finder AppleShowAllFiles -bool "${1:?Usage: finder-show-all-files true|false}" && killall Finder; }
 rm-dsstore() { bash "$HOME/bin/sys-remove-dsstore.sh" "$@"; }
 
+# Ghostty sets TERM=xterm-ghostty locally, which most remote hosts don't have
+# a terminfo entry for ("can't find terminal definition for xterm-ghostty").
+# Fall back to xterm-256color for the remote session only — local Ghostty
+# windows (this function isn't in the call path there) keep full xterm-ghostty
+# capabilities (truecolor, Kitty graphics, etc).
+ssh() { [[ "$TERM" == "xterm-ghostty" ]] && TERM=xterm-256color command ssh "$@" || command ssh "$@"; }
+
 # -----------------------------
 # SECTION: Aliases
 # -----------------------------
