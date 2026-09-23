@@ -22,39 +22,54 @@ echo "--------------------------------"
 # flake.lock is untracked (see .gitignore), so keep a copy to diff against:
 # `nix flake update` pulls nixpkgs/home-manager/nix-darwin to upstream HEAD and
 # nix-switch.sh then activates the result with sudo on macOS. Show what moved
-# before applying it.
+# before applying it. A first-ever run (no flake.lock yet) has nothing to diff
+# but is exactly as consequential as an input bump — it bootstraps sudo-applied
+# system activation from scratch — so it goes through the identical tty/confirm
+# gate rather than falling into the unguarded "nothing changed" path.
 LOCK="${FLAKE_DIR}/flake.lock"
 LOCK_BEFORE=""
+FIRST_RUN=0
 if [[ -f "$LOCK" ]]; then
     LOCK_BEFORE="$(mktemp)"
     trap 'rm -f "$LOCK_BEFORE"' EXIT
     cp "$LOCK" "$LOCK_BEFORE"
+else
+    FIRST_RUN=1
 fi
 
 "$NIX_BIN" flake update --flake "$FLAKE_DIR"
 
+INPUTS_CHANGED=0
 if [[ -n "$LOCK_BEFORE" ]] && ! diff -q "$LOCK_BEFORE" "$LOCK" >/dev/null 2>&1; then
-    highlight "Flake inputs moved:"
-    # Prefer a per-input revision diff; fall back to a raw lock diff when no JSON
-    # tool is on PATH (gojq/jq are Nix-provided, so absent on a first run).
-    JSON_BIN="$(command -v gojq || command -v jq || true)"
-    if [[ -n "$JSON_BIN" ]]; then
-        REV_FILTER='.nodes|to_entries[]|select(.value.locked)|"\(.key) \(.value.locked.rev // .value.locked.narHash)"'
-        diff <("$JSON_BIN" -r "$REV_FILTER" "$LOCK_BEFORE" 2>/dev/null || true) \
-             <("$JSON_BIN" -r "$REV_FILTER" "$LOCK" 2>/dev/null || true) \
-            | sed 's/^/    /' || true
+    INPUTS_CHANGED=1
+fi
+
+if (( FIRST_RUN )) || (( INPUTS_CHANGED )); then
+    if (( INPUTS_CHANGED )); then
+        highlight "Flake inputs moved:"
+        # Prefer a per-input revision diff; fall back to a raw lock diff when no JSON
+        # tool is on PATH (gojq/jq are Nix-provided, so absent on a first run).
+        JSON_BIN="$(command -v gojq || command -v jq || true)"
+        if [[ -n "$JSON_BIN" ]]; then
+            REV_FILTER='.nodes|to_entries[]|select(.value.locked)|"\(.key) \(.value.locked.rev // .value.locked.narHash)"'
+            diff <("$JSON_BIN" -r "$REV_FILTER" "$LOCK_BEFORE" 2>/dev/null || true) \
+                 <("$JSON_BIN" -r "$REV_FILTER" "$LOCK" 2>/dev/null || true) \
+                | sed 's/^/    /' || true
+        else
+            diff "$LOCK_BEFORE" "$LOCK" | sed 's/^/    /' || true
+        fi
     else
-        diff "$LOCK_BEFORE" "$LOCK" | sed 's/^/    /' || true
+        highlight "First run — no existing flake.lock, nothing has been activated yet."
     fi
 
     if [[ "${NIX_UPDATE_ASSUME_YES:-0}" == "1" ]]; then
         info "NIX_UPDATE_ASSUME_YES=1 — applying without prompting."
     elif [[ ! -t 0 ]]; then
-        warn "Not an interactive shell — inputs updated but NOT applied."
+        warn "Not an interactive shell — flake.lock written but NOT applied."
         warn "Re-run interactively, or set NIX_UPDATE_ASSUME_YES=1 to apply unreviewed input bumps."
         exit 0
     elif ! confirm "Build and activate this configuration?"; then
-        warn "Declined — inputs updated but not applied. Run nix-switch.sh when ready."
+        warn "Declined — flake.lock written but not applied. Run nix-switch.sh when ready."
         exit 0
     fi
 else
