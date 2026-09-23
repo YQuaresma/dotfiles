@@ -72,7 +72,7 @@ itself. Does **not** clone — that's manual (step 2).
 **2. Clone** — manual, `gh` is already authenticated by step 1:
 
 ```bash
-gh repo clone YQuaresma/.dotfiles ~/Developer/Repos/dotfiles
+gh repo clone YQuaresma/dotfiles ~/Developer/Repos/dotfiles
 ln -s ~/Developer/Repos/dotfiles ~/.dotfiles
 ```
 
@@ -111,6 +111,7 @@ sys-update.sh                                 # system update (Homebrew/apt/snap
 sys-remove-dsstore.sh [path]                  # recursively remove .DS_Store files (confirms before delete)
 pi-check.sh [ip...]                           # verify Pi-hole blocking (read-only; IPs from argv, PI_IPS, or ~/.config/pi-check/config)
 pi-update.sh <ip>                             # update OS + Pi-hole on a Pi, reboot, wait for recovery
+pi-youtube-block.sh <on|off|status> [ip...]   # toggle a client-scoped YouTube deny group per Pi (reversible; verifies client scope matches across Pis; IPs like pi-check.sh)
 ```
 
 Shell aliases are defined in `symlinks/home/.zshrc.alias` (e.g. `rm-dsstore`).

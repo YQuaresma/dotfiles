@@ -35,13 +35,13 @@ Four steps — the two scripts are idempotent, safe to re-run:
 ### 1. Bootstrap & Clone
 
 ```bash
-bash <(curl -fsSL https://raw.githubusercontent.com/YQuaresma/.dotfiles/main/install/initialise.sh)
+bash <(curl -fsSL https://raw.githubusercontent.com/YQuaresma/dotfiles/main/install/initialise.sh)
 ```
 
 Clones into `~/Developer/Repos/dotfiles` and symlinks `~/.dotfiles` to it — every
 other script in this repo only ever references `~/.dotfiles`, none of them need to
 know or care where you actually put the real clone. Want it somewhere else? Clone
-manually first (`gh repo clone YQuaresma/.dotfiles <path>` then
+manually first (`gh repo clone YQuaresma/dotfiles <path>` then
 `ln -s <path> ~/.dotfiles`) before running `initialise.sh` — it leaves an existing
 `~/.dotfiles` symlink alone.
 
@@ -130,8 +130,8 @@ ssh -T git@github.com
 ssh -T git@gh-personal
 ```
 
-You can now clone with either `git@github.com:YQuaresma/.dotfiles.git` or
-`git@gh-personal:YQuaresma/.dotfiles.git` — same key, same result.
+You can now clone with either `git@github.com:YQuaresma/dotfiles.git` or
+`git@gh-personal:YQuaresma/dotfiles.git` — same key, same result.
 
 ### 4. PGP Configuration
 
@@ -411,6 +411,7 @@ regardless of package manager.
 | `sys-remove-dsstore.sh [path]` | Recursively remove `.DS_Store` files |
 | `pi-check.sh [ip...]` | Verify Pi-hole blocking (read-only) |
 | `pi-update.sh <ip>` | Update OS + Pi-hole on a Pi, reboot, wait for recovery |
+| `pi-youtube-block.sh <on\|off\|status> [ip...]` | Toggle a client-scoped YouTube deny group on each Pi (reversible enable/disable) |
 
 ### Update gates
 
@@ -486,6 +487,46 @@ pi-update.sh <PI-HOLE-IP>
 # Use a different SSH user
 PI_USER=admin pi-update.sh <PI-HOLE-IP>
 ```
+
+### `pi-youtube-block.sh` — Toggle a Client-Scoped YouTube Block
+
+Enables or disables a dedicated Pi-hole deny group (default `Block-Youtube`) on
+each target Pi. The group holds the YouTube deny domains (`youtube.com`,
+`www.youtube.com`, `m.youtube.com`, `youtu.be`, `googlevideo.com`, `ytimg.com`,
+`yt3.ggpht.com`, `googleapis.com`) and is meant to be scoped to specific clients
+(e.g. a single TV's MAC) in the Pi-hole admin UI. This script only flips the
+group on/off and, on `on`, (re)creates the deny domains and links them to the
+group — it does **not** manage client membership, so set that once in the UI.
+
+```bash
+# Block for the group's scoped clients (reversible)
+pi-youtube-block.sh on <PI-HOLE-IP-1> <PI-HOLE-IP-2>
+
+# Unblock — disables the group but keeps the domains for a later "on"
+pi-youtube-block.sh off <PI-HOLE-IP-1> <PI-HOLE-IP-2>
+
+# Show group state, its deny domains, and the clients it is scoped to
+pi-youtube-block.sh status <PI-HOLE-IP-1> <PI-HOLE-IP-2>
+
+# IPs from local config / PI_IPS, like pi-check.sh
+pi-youtube-block.sh on
+
+# Override group name or domain set
+PI_YT_GROUP=Kids-Block PI_YT_DOMAINS=youtube.com,youtu.be pi-youtube-block.sh on
+```
+
+When two or more Pis are targeted, every action also **verifies the group's
+client scope is identical across them** and warns about any MAC/IP present in
+the group on one Pi but missing on another — a mismatch would let a Pi silently
+allow a device the others block. On `on` the script strips the Default-group
+(group 0, whole-network) link that Pi-hole's `tr_domainlist_add` trigger adds to
+every new deny domain, so the block stays scoped to the group rather than
+leaking network-wide.
+
+`off` is preferred over deleting entries: the group and domains stay in place,
+so re-blocking is a single `on` (or an admin-UI toggle) with no data to
+recreate. Targets, SSH user, and key follow the same rules as `pi-check.sh`
+above.
 
 ## Nix + asdf (macOS + Ubuntu)
 
