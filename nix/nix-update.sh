@@ -15,6 +15,28 @@ NIX_BIN="$(command -v nix || echo /nix/var/nix/profiles/default/bin/nix)"
 NIX_BIN_DIR="$(dirname "$NIX_BIN")"
 export PATH="$NIX_BIN_DIR:$PATH"
 
+# The nixpkgs input (nix/flake.nix) is pinned to a specific commit, not
+# nixos-unstable, working around NixOS/nixpkgs#566395 (asdf-vm 0.20.1's
+# upstream release tag was deleted, 404ing the source fetch) until
+# NixOS/nixpkgs#566396 (asdf-vm 0.20.1 -> 0.20.2) merges. Check its status
+# on every run so the pin doesn't linger unnoticed once it's fixed
+# upstream. Best-effort: no GitHub token, so this is subject to the
+# unauthenticated rate limit and silently skipped if unreachable — never
+# blocks the update.
+ASDF_PIN_JSON_BIN="$(command -v gojq || command -v jq || true)"
+if [[ -n "$ASDF_PIN_JSON_BIN" ]]; then
+    ASDF_PIN_PR_STATE="$(curl -fsS --max-time 5 \
+        "https://api.github.com/repos/NixOS/nixpkgs/pulls/566396" 2>/dev/null \
+        | "$ASDF_PIN_JSON_BIN" -r '.merged_at // "null"' 2>/dev/null || true)"
+else
+    ASDF_PIN_PR_STATE=""
+fi
+if [[ -n "$ASDF_PIN_PR_STATE" && "$ASDF_PIN_PR_STATE" != "null" ]]; then
+    warn "NixOS/nixpkgs#566396 merged (${ASDF_PIN_PR_STATE}) — nix/flake.nix's"
+    warn "nixpkgs pin can now move back to \"github:NixOS/nixpkgs/nixos-unstable\"."
+    warn "https://github.com/NixOS/nixpkgs/pull/566396"
+fi
+
 echo "--------------------------------"
 cog_msg "Updating Nix flake inputs..."
 echo "--------------------------------"
